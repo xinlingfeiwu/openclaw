@@ -54,6 +54,24 @@ const ChannelHeartbeatVisibilitySchema = z
   .optional();
 
 /**
+ * TTS voice reply configuration.
+ * Controls when the bot replies with voice messages.
+ */
+const TtsVoiceReplySchema = z
+  .object({
+    enabled: z.boolean().optional(), // Master switch (default: false)
+    fallbackToText: z.boolean().optional(), // Send text if voice fails (default: true)
+    keywords: z.array(z.string()).optional(), // Custom trigger keywords
+    backend: z.enum(["indextts", "say"]).optional(), // TTS backend (default: auto-detect)
+    indexTtsUrl: z.string().url().optional(), // IndexTTS-2 Gradio URL (default: http://localhost:7860)
+    referenceAudio: z.string().optional(), // Voice reference audio path for IndexTTS-2
+    voice: z.string().optional(), // macOS say voice name (default: "Tingting")
+    rate: z.number().int().positive().optional(), // macOS say speech rate
+  })
+  .strict()
+  .optional();
+
+/**
  * Feishu tools configuration.
  * Controls which tool categories are enabled.
  *
@@ -118,6 +136,7 @@ export const FeishuAccountConfigSchema = z
     heartbeat: ChannelHeartbeatVisibilitySchema,
     renderMode: RenderModeSchema,
     tools: FeishuToolsConfigSchema,
+    ttsVoiceReply: TtsVoiceReplySchema,
   })
   .strict();
 
@@ -152,6 +171,7 @@ export const FeishuConfigSchema = z
     heartbeat: ChannelHeartbeatVisibilitySchema,
     renderMode: RenderModeSchema, // raw = plain text (default), card = interactive card with markdown
     tools: FeishuToolsConfigSchema,
+    ttsVoiceReply: TtsVoiceReplySchema,
     // Multi-account configuration
     accounts: z.record(z.string(), FeishuAccountConfigSchema.optional()).optional(),
   })

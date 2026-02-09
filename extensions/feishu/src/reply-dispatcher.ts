@@ -8,8 +8,10 @@ import {
 } from "openclaw/plugin-sdk";
 import type { MentionTarget } from "./mention.js";
 import { resolveFeishuAccount } from "./accounts.js";
+import { MediaDeliveryManager, type MediaDeliveryContext } from "./media-delivery.js";
 import { getFeishuRuntime } from "./runtime.js";
 import { sendMessageFeishu, sendMarkdownCardFeishu } from "./send.js";
+import { PluginTtsEngine } from "./tts.js";
 import { addTypingIndicator, removeTypingIndicator, type TypingIndicatorState } from "./typing.js";
 
 /**
@@ -38,14 +40,37 @@ export type CreateFeishuReplyDispatcherParams = {
   mentionTargets?: MentionTarget[];
   /** Account ID for multi-account support */
   accountId?: string;
+  /** Whether the inbound message triggered voice reply mode */
+  voiceReplyRequested?: boolean;
 };
 
 export function createFeishuReplyDispatcher(params: CreateFeishuReplyDispatcherParams) {
   const core = getFeishuRuntime();
-  const { cfg, agentId, chatId, replyToMessageId, mentionTargets, accountId } = params;
+  const { cfg, agentId, chatId, replyToMessageId, mentionTargets, accountId, voiceReplyRequested } =
+    params;
 
   // Resolve account for config access
   const account = resolveFeishuAccount({ cfg, accountId });
+
+  // Media delivery manager for voice/file/image replies
+  const mediaDelivery = new MediaDeliveryManager({
+    log: (msg) => params.runtime.log?.(msg),
+    error: (msg) => params.runtime.error?.(msg),
+  });
+
+  // Plugin-level TTS engine for converting text → voice
+  const ttsConfig = account.config?.ttsVoiceReply;
+  const pluginTts = new PluginTtsEngine({
+    log: (msg) => params.runtime.log?.(msg),
+    error: (msg) => params.runtime.error?.(msg),
+    config: {
+      backend: ttsConfig?.backend,
+      indexTtsUrl: ttsConfig?.indexTtsUrl,
+      referenceAudio: ttsConfig?.referenceAudio,
+      voice: ttsConfig?.voice,
+      rate: ttsConfig?.rate,
+    },
+  });
 
   const prefixContext = createReplyPrefixContext({
     cfg,
@@ -109,8 +134,75 @@ export function createFeishuReplyDispatcher(params: CreateFeishuReplyDispatcherP
       onReplyStart: typingCallbacks.onReplyStart,
       deliver: async (payload: ReplyPayload) => {
         params.runtime.log?.(
-          `feishu[${account.accountId}] deliver called: text=${payload.text?.slice(0, 100)}`,
+          `feishu[${account.accountId}] deliver called: text=${payload.text?.slice(0, 100)} mediaUrl=${payload.mediaUrl ? "yes" : "no"} audioAsVoice=${payload.audioAsVoice} voiceMode=${voiceReplyRequested}`,
         );
+
+        // ── Plugin TTS: convert text → voice when voice mode is active ──
+        if (voiceReplyRequested && payload.text?.trim()) {
+          const fallbackToText = ttsConfig?.fallbackToText !== false;
+          params.runtime.log?.(
+            `feishu[${account.accountId}] plugin TTS: generating voice from text (${payload.text.length} chars)`,
+          );
+
+          const ttsResult = await pluginTts.synthesize(payload.text);
+          if (ttsResult) {
+            const deliveryCtx: MediaDeliveryContext = {
+              cfg,
+              chatId,
+              replyToMessageId,
+              accountId,
+            };
+            // deliverAudio expects a local file path, asVoice=true
+            const result = await mediaDelivery.deliver(ttsResult.opusPath, deliveryCtx, true);
+            if (result.success && result.sentAsVoice) {
+              params.runtime.log?.(
+                `feishu[${account.accountId}] plugin TTS voice delivered, suppressing text`,
+              );
+              return; // voice sent, skip text
+            }
+            params.runtime.log?.(
+              `feishu[${account.accountId}] plugin TTS voice delivery failed: ${result.error}`,
+            );
+          } else {
+            params.runtime.log?.(`feishu[${account.accountId}] plugin TTS synthesis failed`);
+          }
+
+          // TTS failed → fall back to text if configured
+          if (!fallbackToText) {
+            params.runtime.log?.(
+              `feishu[${account.accountId}] plugin TTS failed, fallbackToText=false, skipping`,
+            );
+            return;
+          }
+          // Fall through to text delivery below
+        }
+
+        // ── Media delivery (non-voice: images, files) ──
+        const mediaUrls = payload.mediaUrls ?? (payload.mediaUrl ? [payload.mediaUrl] : []);
+        if (mediaUrls.length > 0 && !voiceReplyRequested) {
+          // When NOT in voice mode, deliver media normally (images, files, etc.)
+          const deliveryCtx: MediaDeliveryContext = {
+            cfg,
+            chatId,
+            replyToMessageId,
+            accountId,
+          };
+
+          for (const url of mediaUrls) {
+            const result = await mediaDelivery.deliver(url, deliveryCtx, false);
+            if (!result.success) {
+              params.runtime.log?.(
+                `feishu[${account.accountId}] media delivery failed: ${result.error}`,
+              );
+            }
+          }
+
+          if (!payload.text?.trim()) {
+            return;
+          }
+        }
+
+        // ── Text delivery (existing logic) ──
         const text = payload.text ?? "";
         if (!text.trim()) {
           params.runtime.log?.(`feishu[${account.accountId}] deliver: empty text, skipping`);

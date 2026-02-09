@@ -20,6 +20,7 @@ import {
 import { createFeishuReplyDispatcher } from "./reply-dispatcher.js";
 import { getFeishuRuntime } from "./runtime.js";
 import { getMessageFeishu } from "./send.js";
+import { getVoiceReplyModeManager } from "./voice-mode.js";
 
 // --- Permission error extraction ---
 // Extract permission grant URL from Feishu API error response.
@@ -657,6 +658,38 @@ export async function handleFeishuMessage(params: {
       },
     });
 
+    // ── Voice reply mode: /tts command + trigger detection ──
+    const voiceManager = getVoiceReplyModeManager();
+    const ttsEnabled = feishuCfg?.ttsVoiceReply?.enabled !== false; // default true when present
+    let voiceReplyRequested = false;
+
+    if (ttsEnabled) {
+      // Handle /tts commands (intercept: reply directly, don't forward to AI)
+      const ttsCmd = voiceManager.handleTtsCommand(ctx.content, route.sessionKey);
+      if (ttsCmd.intercepted && ttsCmd.replyText) {
+        const { sendMessageFeishu: sendMsg } = await import("./send.js");
+        await sendMsg({
+          cfg,
+          to: ctx.chatId,
+          text: ttsCmd.replyText,
+          accountId: account.accountId,
+        });
+        log(`feishu[${account.accountId}]: handled /tts command (session=${route.sessionKey})`);
+        return;
+      }
+
+      // Check if voice reply should be used for this message
+      const voiceDecision = voiceManager.shouldUseVoice({
+        sessionKey: route.sessionKey,
+        contentType: event.message.message_type,
+        content: ctx.content,
+      });
+      voiceReplyRequested = voiceDecision.useVoice;
+      log(
+        `feishu[${account.accountId}]: voice mode check: useVoice=${voiceDecision.useVoice} reason=${voiceDecision.reason} session=${route.sessionKey} sessionModeOn=${voiceManager.isSessionModeOn(route.sessionKey)}`,
+      );
+    }
+
     const preview = ctx.content.replace(/\s+/g, " ").slice(0, 160);
     const inboundLabel = isGroup
       ? `Feishu[${account.accountId}] message in group ${ctx.chatId}`
@@ -841,6 +874,7 @@ export async function handleFeishuMessage(params: {
       replyToMessageId: ctx.messageId,
       mentionTargets: ctx.mentionTargets,
       accountId: account.accountId,
+      voiceReplyRequested,
     });
 
     log(`feishu[${account.accountId}]: dispatching to agent (session=${route.sessionKey})`);

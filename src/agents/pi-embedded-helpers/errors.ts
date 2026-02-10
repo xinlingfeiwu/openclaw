@@ -24,7 +24,7 @@ export function isContextOverflowError(errorMessage?: string): boolean {
     lower.includes("prompt is too long") ||
     lower.includes("exceeds model context window") ||
     (hasRequestSizeExceeds && hasContextWindow) ||
-    lower.includes("context overflow") ||
+    lower.includes("context overflow:") ||
     (lower.includes("413") && lower.includes("too large"))
   );
 }
@@ -50,16 +50,18 @@ export function isCompactionFailureError(errorMessage?: string): boolean {
   if (!errorMessage) {
     return false;
   }
-  if (!isContextOverflowError(errorMessage)) {
-    return false;
-  }
   const lower = errorMessage.toLowerCase();
-  return (
+  const hasCompactionTerm =
     lower.includes("summarization failed") ||
     lower.includes("auto-compaction") ||
     lower.includes("compaction failed") ||
-    lower.includes("compaction")
-  );
+    lower.includes("compaction");
+  if (!hasCompactionTerm) {
+    return false;
+  }
+  // For compaction failures, also accept "context overflow" without colon
+  // since the error message itself describes a compaction/summarization failure
+  return isContextOverflowError(errorMessage) || lower.includes("context overflow");
 }
 
 const ERROR_PAYLOAD_PREFIX_RE =
@@ -471,6 +473,7 @@ const ERROR_PATTERNS = {
     "insufficient credits",
     "credit balance",
     "plans & billing",
+    "insufficient balance",
   ],
   auth: [
     /invalid[_ ]?api[_ ]?key/,
@@ -531,16 +534,8 @@ export function isBillingErrorMessage(raw: string): boolean {
   if (!value) {
     return false;
   }
-  if (matchesErrorPatterns(value, ERROR_PATTERNS.billing)) {
-    return true;
-  }
-  return (
-    value.includes("billing") &&
-    (value.includes("upgrade") ||
-      value.includes("credits") ||
-      value.includes("payment") ||
-      value.includes("plan"))
-  );
+
+  return matchesErrorPatterns(value, ERROR_PATTERNS.billing);
 }
 
 export function isMissingToolCallInputError(raw: string): boolean {

@@ -24,13 +24,13 @@ export const feishuOutbound: ChannelOutboundAdapter = {
   chunkerMode: "markdown",
   textChunkLimit: 4000,
   sendText: async ({ cfg, to, text, accountId }) => {
-    const result = await sendMessageFeishu({ cfg, to, text, accountId });
+    const result = await sendMessageFeishu({ cfg, to, text, accountId: accountId ?? undefined });
     return { channel: "feishu", ...result };
   },
   sendMedia: async ({ cfg, to, text, mediaUrl, accountId }) => {
     // Send text first if provided
     if (text?.trim()) {
-      await sendMessageFeishu({ cfg, to, text, accountId });
+      await sendMessageFeishu({ cfg, to, text, accountId: accountId ?? undefined });
     }
 
     // Upload and send media if URL provided
@@ -42,7 +42,11 @@ export const feishuOutbound: ChannelOutboundAdapter = {
             log: (msg) => console.log(`[feishu] ${msg}`),
             error: (msg) => console.error(`[feishu] ${msg}`),
           });
-          const result = await delivery.deliver(mediaUrl, { cfg, chatId: to, accountId }, true);
+          const result = await delivery.deliver(
+            mediaUrl,
+            { cfg, chatId: to, accountId: accountId ?? undefined },
+            true,
+          );
           if (result.success) {
             return { channel: "feishu", messageId: "audio-sent", chatId: to };
           }
@@ -50,20 +54,35 @@ export const feishuOutbound: ChannelOutboundAdapter = {
           throw new Error(result.error ?? "audio delivery failed");
         }
 
-        const result = await sendMediaFeishu({ cfg, to, mediaUrl, accountId });
+        const result = await sendMediaFeishu({
+          cfg,
+          to,
+          mediaUrl,
+          accountId: accountId ?? undefined,
+        });
         return { channel: "feishu", ...result };
       } catch (err) {
         // Log the error for debugging
         console.error(`[feishu] sendMediaFeishu failed:`, err);
         // Fallback to URL link if upload fails
         const fallbackText = `📎 ${mediaUrl}`;
-        const result = await sendMessageFeishu({ cfg, to, text: fallbackText, accountId });
+        const result = await sendMessageFeishu({
+          cfg,
+          to,
+          text: fallbackText,
+          accountId: accountId ?? undefined,
+        });
         return { channel: "feishu", ...result };
       }
     }
 
     // No media URL, just return text result
-    const result = await sendMessageFeishu({ cfg, to, text: text ?? "", accountId });
+    const result = await sendMessageFeishu({
+      cfg,
+      to,
+      text: text ?? "",
+      accountId: accountId ?? undefined,
+    });
     return { channel: "feishu", ...result };
   },
 };

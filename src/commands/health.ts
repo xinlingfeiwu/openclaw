@@ -382,6 +382,15 @@ export const formatHealthChannelLines = (
   return lines;
 };
 
+// -- Probe result cache: avoid hammering external APIs on every 60s health refresh --
+const PROBE_CACHE_TTL_MS = 5 * 60_000; // 5 minutes
+const probeCache = new Map<string, { result: unknown; at: number }>();
+
+/** @internal Reset probe cache (test-only). */
+export function __resetProbeCacheForTest() {
+  probeCache.clear();
+}
+
 export async function getHealthSnapshot(params?: {
   timeoutMs?: number;
   probe?: boolean;
@@ -464,16 +473,24 @@ export async function getHealthSnapshot(params?: {
       let probe: unknown;
       let lastProbeAt: number | null = null;
       if (enabled && configured && doProbe && plugin.status?.probeAccount) {
-        try {
-          probe = await plugin.status.probeAccount({
-            account,
-            timeoutMs: cappedTimeout,
-            cfg,
-          });
-          lastProbeAt = Date.now();
-        } catch (err) {
-          probe = { ok: false, error: formatErrorMessage(err) };
-          lastProbeAt = Date.now();
+        const cacheKey = `${plugin.id}:${accountId}`;
+        const cached = probeCache.get(cacheKey);
+        if (cached && Date.now() - cached.at < PROBE_CACHE_TTL_MS) {
+          probe = cached.result;
+          lastProbeAt = cached.at;
+        } else {
+          try {
+            probe = await plugin.status.probeAccount({
+              account,
+              timeoutMs: cappedTimeout,
+              cfg,
+            });
+            lastProbeAt = Date.now();
+          } catch (err) {
+            probe = { ok: false, error: formatErrorMessage(err) };
+            lastProbeAt = Date.now();
+          }
+          probeCache.set(cacheKey, { result: probe, at: lastProbeAt });
         }
       }
 

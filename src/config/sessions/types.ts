@@ -1,5 +1,5 @@
-import type { Skill } from "@mariozechner/pi-coding-agent";
 import crypto from "node:crypto";
+import type { Skill } from "@mariozechner/pi-coding-agent";
 import type { ChatType } from "../../channels/chat-type.js";
 import type { ChannelId } from "../../channels/plugins/types.js";
 import type { DeliveryContext } from "../../utils/delivery-context.js";
@@ -80,6 +80,13 @@ export type SessionEntry = {
   totalTokensFresh?: boolean;
   modelProvider?: string;
   model?: string;
+  /**
+   * Last selected/runtime model pair for which a fallback notice was emitted.
+   * Used to avoid repeating the same fallback notice every turn.
+   */
+  fallbackNoticeSelectedModel?: string;
+  fallbackNoticeActiveModel?: string;
+  fallbackNoticeReason?: string;
   contextTokens?: number;
   compactionCount?: number;
   memoryFlushAt?: number;

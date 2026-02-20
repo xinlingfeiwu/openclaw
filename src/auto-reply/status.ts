@@ -1,15 +1,12 @@
 import fs from "node:fs";
-import type { SkillCommandSpec } from "../agents/skills.js";
-import type { OpenClawConfig } from "../config/config.js";
-import type { MediaUnderstandingDecision } from "../media-understanding/types.js";
-import type { CommandCategory } from "./commands-registry.types.js";
-import type { ElevatedLevel, ReasoningLevel, ThinkLevel, VerboseLevel } from "./thinking.js";
 import { lookupContextTokens } from "../agents/context.js";
 import { DEFAULT_CONTEXT_TOKENS, DEFAULT_MODEL, DEFAULT_PROVIDER } from "../agents/defaults.js";
 import { resolveModelAuthMode } from "../agents/model-auth.js";
 import { resolveConfiguredModelRef } from "../agents/model-selection.js";
 import { resolveSandboxRuntimeStatus } from "../agents/sandbox.js";
+import type { SkillCommandSpec } from "../agents/skills.js";
 import { derivePromptTokens, normalizeUsage, type UsageLike } from "../agents/usage.js";
+import type { OpenClawConfig } from "../config/config.js";
 import {
   resolveMainSessionKey,
   resolveSessionFilePath,
@@ -19,6 +16,7 @@ import {
 } from "../config/sessions.js";
 import { formatTimeAgo } from "../infra/format-time/format-relative.ts";
 import { resolveCommitHash } from "../infra/git-commit.js";
+import type { MediaUnderstandingDecision } from "../media-understanding/types.js";
 import { listPluginCommands } from "../plugins/commands.js";
 import { resolveAgentIdFromSessionKey } from "../routing/session-key.js";
 import {
@@ -41,6 +39,10 @@ import {
   listChatCommandsForConfig,
   type ChatCommandDefinition,
 } from "./commands-registry.js";
+import type { CommandCategory } from "./commands-registry.types.js";
+import { resolveActiveFallbackState } from "./fallback-state.js";
+import { formatProviderModelRef, resolveSelectedAndActiveModel } from "./model-runtime.js";
+import type { ElevatedLevel, ReasoningLevel, ThinkLevel, VerboseLevel } from "./thinking.js";
 
 type AgentDefaults = NonNullable<NonNullable<OpenClawConfig["agents"]>["defaults"]>;
 type AgentConfig = Partial<AgentDefaults> & {
@@ -72,6 +74,7 @@ type StatusArgs = {
   resolvedReasoning?: ReasoningLevel;
   resolvedElevated?: ElevatedLevel;
   modelAuth?: string;
+  activeModelAuth?: string;
   usageLine?: string;
   timeLine?: string;
   queue?: QueueStatus;
@@ -339,12 +342,19 @@ export function buildStatusMessage(args: StatusArgs): string {
     defaultProvider: DEFAULT_PROVIDER,
     defaultModel: DEFAULT_MODEL,
   });
-  const provider = entry?.providerOverride ?? resolved.provider ?? DEFAULT_PROVIDER;
-  let model = entry?.modelOverride ?? resolved.model ?? DEFAULT_MODEL;
+  const selectedProvider = entry?.providerOverride ?? resolved.provider ?? DEFAULT_PROVIDER;
+  const selectedModel = entry?.modelOverride ?? resolved.model ?? DEFAULT_MODEL;
+  const modelRefs = resolveSelectedAndActiveModel({
+    selectedProvider,
+    selectedModel,
+    sessionEntry: entry,
+  });
+  let activeProvider = modelRefs.active.provider;
+  let activeModel = modelRefs.active.model;
   let contextTokens =
     entry?.contextTokens ??
     args.agent?.contextTokens ??
-    lookupContextTokens(model) ??
+    lookupContextTokens(activeModel) ??
     DEFAULT_CONTEXT_TOKENS;
 
   let inputTokens = entry?.inputTokens;
@@ -366,8 +376,18 @@ export function buildStatusMessage(args: StatusArgs): string {
       if (!totalTokens || totalTokens === 0 || candidate > totalTokens) {
         totalTokens = candidate;
       }
-      if (!model) {
-        model = logUsage.model ?? model;
+      if (!entry?.model && logUsage.model) {
+        const slashIndex = logUsage.model.indexOf("/");
+        if (slashIndex > 0) {
+          const provider = logUsage.model.slice(0, slashIndex).trim();
+          const model = logUsage.model.slice(slashIndex + 1).trim();
+          if (provider && model) {
+            activeProvider = provider;
+            activeModel = model;
+          }
+        } else {
+          activeModel = logUsage.model;
+        }
       }
       if (!contextTokens && logUsage.model) {
         contextTokens = lookupContextTokens(logUsage.model) ?? contextTokens;
@@ -440,14 +460,21 @@ export function buildStatusMessage(args: StatusArgs): string {
   ];
   const activationLine = activationParts.filter(Boolean).join(" · ");
 
-  const authMode = resolveModelAuthMode(provider, args.config);
-  const authLabelValue =
-    args.modelAuth ?? (authMode && authMode !== "unknown" ? authMode : undefined);
-  const showCost = authLabelValue === "api-key" || authLabelValue === "mixed";
+  const activeAuthMode = resolveModelAuthMode(activeProvider, args.config);
+  const selectedAuthLabelValue =
+    args.modelAuth ??
+    (() => {
+      const selectedAuthMode = resolveModelAuthMode(selectedProvider, args.config);
+      return selectedAuthMode && selectedAuthMode !== "unknown" ? selectedAuthMode : undefined;
+    })();
+  const activeAuthLabelValue =
+    args.activeModelAuth ??
+    (activeAuthMode && activeAuthMode !== "unknown" ? activeAuthMode : undefined);
+  const showCost = activeAuthLabelValue === "api-key" || activeAuthLabelValue === "mixed";
   const costConfig = showCost
     ? resolveModelCostConfig({
-        provider,
-        model,
+        provider: activeProvider,
+        model: activeModel,
         config: args.config,
       })
     : undefined;
@@ -464,9 +491,21 @@ export function buildStatusMessage(args: StatusArgs): string {
       : undefined;
   const costLabel = showCost && hasUsage ? formatUsd(cost) : undefined;
 
-  const modelLabel = model ? `${provider}/${model}` : "unknown";
-  const authLabel = authLabelValue ? ` · 🔑 ${authLabelValue}` : "";
-  const modelLine = `🧠 Model: ${modelLabel}${authLabel}`;
+  const selectedModelLabel = modelRefs.selected.label || "unknown";
+  const activeModelLabel = formatProviderModelRef(activeProvider, activeModel) || "unknown";
+  const fallbackState = resolveActiveFallbackState({
+    selectedModelRef: selectedModelLabel,
+    activeModelRef: activeModelLabel,
+    state: entry,
+  });
+  const selectedAuthLabel = selectedAuthLabelValue ? ` · 🔑 ${selectedAuthLabelValue}` : "";
+  const modelLine = `🧠 Model: ${selectedModelLabel}${selectedAuthLabel}`;
+  const showFallbackAuth = activeAuthLabelValue && activeAuthLabelValue !== selectedAuthLabelValue;
+  const fallbackLine = fallbackState.active
+    ? `↪️ Fallback: ${activeModelLabel}${
+        showFallbackAuth ? ` · 🔑 ${activeAuthLabelValue}` : ""
+      } (${fallbackState.reason ?? "selected model unavailable"})`
+    : null;
   const commit = resolveCommitHash();
   const versionLine = `🦞 OpenClaw ${VERSION}${commit ? ` (${commit})` : ""}`;
   const usagePair = formatUsagePair(inputTokens, outputTokens);
@@ -480,6 +519,7 @@ export function buildStatusMessage(args: StatusArgs): string {
     versionLine,
     args.timeLine,
     modelLine,
+    fallbackLine,
     usageCostLine,
     `📚 ${contextLine}`,
     mediaLine,

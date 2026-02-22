@@ -633,7 +633,9 @@ export async function handleFeishuMessage(params: {
       cfg,
     );
     const storeAllowFrom =
-      !isGroup && (dmPolicy !== "open" || shouldComputeCommandAuthorized)
+      !isGroup &&
+      dmPolicy !== "allowlist" &&
+      (dmPolicy !== "open" || shouldComputeCommandAuthorized)
         ? await core.channel.pairing.readAllowFromStore("feishu").catch(() => [])
         : [];
     const effectiveDmAllowFrom = [...configAllowFrom, ...storeAllowFrom];

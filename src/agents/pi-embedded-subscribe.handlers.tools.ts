@@ -1,18 +1,19 @@
 import type { AgentEvent } from "@mariozechner/pi-agent-core";
+import { emitAgentEvent } from "../infra/agent-events.js";
+import { getGlobalHookRunner } from "../plugins/hook-runner-global.js";
 import type { PluginHookAfterToolCallEvent } from "../plugins/types.js";
+import { normalizeTextForComparison } from "./pi-embedded-helpers.js";
+import { isMessagingTool, isMessagingToolSendAction } from "./pi-embedded-messaging.js";
 import type {
   ToolCallSummary,
   ToolHandlerContext,
 } from "./pi-embedded-subscribe.handlers.types.js";
-import { emitAgentEvent } from "../infra/agent-events.js";
-import { getGlobalHookRunner } from "../plugins/hook-runner-global.js";
-import { normalizeTextForComparison } from "./pi-embedded-helpers.js";
-import { isMessagingTool, isMessagingToolSendAction } from "./pi-embedded-messaging.js";
 import {
+  extractMessagingToolSend,
   extractToolErrorMessage,
   extractToolResultMediaPaths,
   extractToolResultText,
-  extractMessagingToolSend,
+  filterToolResultMediaUrls,
   isToolResultError,
   sanitizeToolResult,
 } from "./pi-embedded-subscribe.tools.js";
@@ -381,7 +382,7 @@ export async function handleToolExecutionEnd(
   // When shouldEmitToolOutput() is true, emitToolOutput already delivers media
   // via parseReplyDirectives (MEDIA: text extraction), so skip to avoid duplicates.
   if (ctx.params.onToolResult && !isToolError && !ctx.shouldEmitToolOutput()) {
-    const mediaPaths = extractToolResultMediaPaths(result);
+    const mediaPaths = filterToolResultMediaUrls(toolName, extractToolResultMediaPaths(result));
     if (mediaPaths.length > 0) {
       try {
         void ctx.params.onToolResult({ mediaUrls: mediaPaths });

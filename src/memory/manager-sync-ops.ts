@@ -1,11 +1,9 @@
-import type { DatabaseSync } from "node:sqlite";
-import chokidar, { FSWatcher } from "chokidar";
 import { randomUUID } from "node:crypto";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { SessionFileEntry } from "./session-files.js";
-import type { MemorySource, MemorySyncProgressUpdate } from "./types.js";
+import type { DatabaseSync } from "node:sqlite";
+import chokidar, { FSWatcher } from "chokidar";
 import { resolveAgentDir } from "../agents/agent-scope.js";
 import { ResolvedMemorySearchConfig } from "../agents/memory-search.js";
 import { type OpenClawConfig } from "../config/config.js";
@@ -23,6 +21,7 @@ import {
   type OpenAiEmbeddingClient,
   type VoyageEmbeddingClient,
 } from "./embeddings.js";
+import { isFileMissingError } from "./fs-utils.js";
 import {
   buildFileEntry,
   ensureDir,
@@ -32,6 +31,7 @@ import {
 } from "./internal.js";
 import { type MemoryFileEntry } from "./internal.js";
 import { ensureMemoryIndexSchema } from "./memory-schema.js";
+import type { SessionFileEntry } from "./session-files.js";
 import {
   buildSessionEntry,
   listSessionFilesForAgent,
@@ -39,6 +39,7 @@ import {
 } from "./session-files.js";
 import { loadSqliteVecExtension } from "./sqlite-vec.js";
 import { requireNodeSqlite } from "./sqlite.js";
+import type { MemorySource, MemorySyncProgressUpdate } from "./types.js";
 
 type MemoryIndexMeta = {
   model: string;
@@ -522,7 +523,15 @@ export abstract class MemoryManagerSyncOps {
     if (end <= start) {
       return 0;
     }
-    const handle = await fs.open(absPath, "r");
+    let handle;
+    try {
+      handle = await fs.open(absPath, "r");
+    } catch (err) {
+      if (isFileMissingError(err)) {
+        return 0;
+      }
+      throw err;
+    }
     try {
       let offset = start;
       let count = 0;
@@ -625,9 +634,9 @@ export abstract class MemoryManagerSyncOps {
     }
 
     const files = await listMemoryFiles(this.workspaceDir, this.settings.extraPaths);
-    const fileEntries = await Promise.all(
-      files.map(async (file) => buildFileEntry(file, this.workspaceDir)),
-    );
+    const fileEntries = (
+      await Promise.all(files.map(async (file) => buildFileEntry(file, this.workspaceDir)))
+    ).filter((entry): entry is MemoryFileEntry => entry !== null);
     log.debug("memory sync: indexing memory files", {
       files: fileEntries.length,
       needsFullReindex: params.needsFullReindex,

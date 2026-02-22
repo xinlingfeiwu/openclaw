@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, expect, vi } from "vitest";
-import type { OpenClawConfig } from "../config/config.js";
 import { withTempHome as withTempHomeBase } from "../../test/helpers/temp-home.js";
+import type { OpenClawConfig } from "../config/config.js";
 
 // Avoid exporting vitest mock types (TS2742 under pnpm + d.ts emit).
 // oxlint-disable-next-line typescript/no-explicit-any
@@ -229,6 +229,7 @@ export async function runGreetingPromptForBareNewOrReset(params: {
   expect(getRunEmbeddedPiAgentMock()).toHaveBeenCalledOnce();
   const prompt = getRunEmbeddedPiAgentMock().mock.calls[0]?.[0]?.prompt ?? "";
   expect(prompt).toContain("A new session was started via /new or /reset");
+  expect(prompt).toContain("Execute your Session Startup sequence now");
 }
 
 export function installTriggerHandlingE2eTestHooks() {

@@ -1,48 +1,54 @@
-// Prevent duplicate processing when WebSocket reconnects or Feishu redelivers messages.
-// Each account maintains its own dedup state so multiple bot accounts in the same group
-// can each independently check and respond to messages they are @mentioned in.
-const DEDUP_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const DEDUP_MAX_SIZE = 1_000;
-const DEDUP_CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // cleanup every 5 minutes
+import os from "node:os";
+import path from "node:path";
+import { createDedupeCache, createPersistentDedupe } from "openclaw/plugin-sdk";
 
-// Per-account dedup: accountId -> (messageId -> timestamp)
-const accountMessageIds = new Map<string, Map<string, number>>();
-const accountLastCleanup = new Map<string, number>();
+// Persistent TTL: 24 hours — survives restarts & WebSocket reconnects.
+const DEDUP_TTL_MS = 24 * 60 * 60 * 1000;
+const MEMORY_MAX_SIZE = 1_000;
+const FILE_MAX_ENTRIES = 10_000;
 
-function getAccountMap(accountId: string): Map<string, number> {
-  let map = accountMessageIds.get(accountId);
-  if (!map) {
-    map = new Map<string, number>();
-    accountMessageIds.set(accountId, map);
+const memoryDedupe = createDedupeCache({ ttlMs: DEDUP_TTL_MS, maxSize: MEMORY_MAX_SIZE });
+
+function resolveStateDirFromEnv(env: NodeJS.ProcessEnv = process.env): string {
+  const stateOverride = env.OPENCLAW_STATE_DIR?.trim() || env.CLAWDBOT_STATE_DIR?.trim();
+  if (stateOverride) {
+    return stateOverride;
   }
-  return map;
+  if (env.VITEST || env.NODE_ENV === "test") {
+    return path.join(os.tmpdir(), ["openclaw-vitest", String(process.pid)].join("-"));
+  }
+  return path.join(os.homedir(), ".openclaw");
 }
 
-export function tryRecordMessage(accountId: string, messageId: string): boolean {
-  const now = Date.now();
-  const processedMessageIds = getAccountMap(accountId);
-  const lastCleanupTime = accountLastCleanup.get(accountId) ?? 0;
+function resolveNamespaceFilePath(namespace: string): string {
+  const safe = namespace.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return path.join(resolveStateDirFromEnv(), "feishu", "dedup", `${safe}.json`);
+}
 
-  // Throttled cleanup: evict expired entries at most once per interval.
-  if (now - lastCleanupTime > DEDUP_CLEANUP_INTERVAL_MS) {
-    for (const [id, ts] of processedMessageIds) {
-      if (now - ts > DEDUP_TTL_MS) {
-        processedMessageIds.delete(id);
-      }
-    }
-    accountLastCleanup.set(accountId, now);
-  }
+const persistentDedupe = createPersistentDedupe({
+  ttlMs: DEDUP_TTL_MS,
+  memoryMaxSize: MEMORY_MAX_SIZE,
+  fileMaxEntries: FILE_MAX_ENTRIES,
+  resolveFilePath: resolveNamespaceFilePath,
+});
 
-  if (processedMessageIds.has(messageId)) {
-    return false;
-  }
+/**
+ * Synchronous dedup — memory only.
+ * Kept for backward compatibility; prefer {@link tryRecordMessagePersistent}.
+ */
+export function tryRecordMessage(messageId: string): boolean {
+  return !memoryDedupe.check(messageId);
+}
 
-  // Evict oldest entries if cache is full.
-  if (processedMessageIds.size >= DEDUP_MAX_SIZE) {
-    const first = processedMessageIds.keys().next().value!;
-    processedMessageIds.delete(first);
-  }
-
-  processedMessageIds.set(messageId, now);
-  return true;
+export async function tryRecordMessagePersistent(
+  messageId: string,
+  namespace = "global",
+  log?: (...args: unknown[]) => void,
+): Promise<boolean> {
+  return persistentDedupe.checkAndRecord(messageId, {
+    namespace,
+    onDiskError: (error) => {
+      log?.(`feishu-dedup: disk error, falling back to memory: ${String(error)}`);
+    },
+  });
 }

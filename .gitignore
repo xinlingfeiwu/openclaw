@@ -17,6 +17,8 @@ __pycache__/
 ui/src/ui/__screenshots__/
 ui/playwright-report/
 ui/test-results/
+packages/dashboard-next/.next/
+packages/dashboard-next/out/
 
 # Mise configuration files
 mise.toml
@@ -103,3 +105,16 @@ apps/ios/LocalSigning.xcconfig
 # Vendor files bundled with export-html feature (exception to vendor/ rule)
 !src/auto-reply/reply/export-html/vendor/
 !src/auto-reply/reply/export-html/vendor/**
+
+# Generated protocol schema (produced via pnpm protocol:gen)
+dist/protocol.schema.json
+.ant-colony/
+
+# Eclipse
+**/.project
+**/.classpath
+**/.settings/
+**/.gradle/
+
+# Synthing
+**/.stfolder/

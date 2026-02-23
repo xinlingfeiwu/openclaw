@@ -58,24 +58,6 @@ const ChannelHeartbeatVisibilitySchema = z
   .optional();
 
 /**
- * TTS voice reply configuration.
- * Controls when the bot replies with voice messages.
- */
-const TtsVoiceReplySchema = z
-  .object({
-    enabled: z.boolean().optional(), // Master switch (default: false)
-    fallbackToText: z.boolean().optional(), // Send text if voice fails (default: true)
-    keywords: z.array(z.string()).optional(), // Custom trigger keywords
-    backend: z.enum(["indextts", "say"]).optional(), // TTS backend (default: auto-detect)
-    indexTtsUrl: z.string().url().optional(), // IndexTTS-2 Gradio URL (default: http://localhost:7860)
-    referenceAudio: z.string().optional(), // Voice reference audio path for IndexTTS-2
-    voice: z.string().optional(), // macOS say voice name (default: "Tingting")
-    rate: z.number().int().positive().optional(), // macOS say speech rate
-  })
-  .strict()
-  .optional();
-
-/**
  * Dynamic agent creation configuration.
  * When enabled, a new agent is created for each unique DM user.
  */
@@ -130,6 +112,31 @@ export const FeishuGroupSchema = z
   })
   .strict();
 
+const FeishuSharedConfigShape = {
+  webhookHost: z.string().optional(),
+  webhookPort: z.number().int().positive().optional(),
+  capabilities: z.array(z.string()).optional(),
+  markdown: MarkdownConfigSchema,
+  configWrites: z.boolean().optional(),
+  dmPolicy: DmPolicySchema.optional(),
+  allowFrom: z.array(z.union([z.string(), z.number()])).optional(),
+  groupPolicy: GroupPolicySchema.optional(),
+  groupAllowFrom: z.array(z.union([z.string(), z.number()])).optional(),
+  requireMention: z.boolean().optional(),
+  groups: z.record(z.string(), FeishuGroupSchema.optional()).optional(),
+  historyLimit: z.number().int().min(0).optional(),
+  dmHistoryLimit: z.number().int().min(0).optional(),
+  dms: z.record(z.string(), DmConfigSchema).optional(),
+  textChunkLimit: z.number().int().positive().optional(),
+  chunkMode: z.enum(["length", "newline"]).optional(),
+  blockStreamingCoalesce: BlockStreamingCoalesceSchema,
+  mediaMaxMb: z.number().positive().optional(),
+  heartbeat: ChannelHeartbeatVisibilitySchema,
+  renderMode: RenderModeSchema,
+  streaming: StreamingModeSchema,
+  tools: FeishuToolsConfigSchema,
+};
+
 /**
  * Per-account configuration.
  * All fields are optional - missing fields inherit from top-level config.
@@ -145,29 +152,7 @@ export const FeishuAccountConfigSchema = z
     domain: FeishuDomainSchema.optional(),
     connectionMode: FeishuConnectionModeSchema.optional(),
     webhookPath: z.string().optional(),
-    webhookHost: z.string().optional(),
-    webhookPort: z.number().int().positive().optional(),
-    capabilities: z.array(z.string()).optional(),
-    markdown: MarkdownConfigSchema,
-    configWrites: z.boolean().optional(),
-    dmPolicy: DmPolicySchema.optional(),
-    allowFrom: z.array(z.union([z.string(), z.number()])).optional(),
-    groupPolicy: GroupPolicySchema.optional(),
-    groupAllowFrom: z.array(z.union([z.string(), z.number()])).optional(),
-    requireMention: z.boolean().optional(),
-    groups: z.record(z.string(), FeishuGroupSchema.optional()).optional(),
-    historyLimit: z.number().int().min(0).optional(),
-    dmHistoryLimit: z.number().int().min(0).optional(),
-    dms: z.record(z.string(), DmConfigSchema).optional(),
-    textChunkLimit: z.number().int().positive().optional(),
-    chunkMode: z.enum(["length", "newline"]).optional(),
-    blockStreamingCoalesce: BlockStreamingCoalesceSchema,
-    mediaMaxMb: z.number().positive().optional(),
-    heartbeat: ChannelHeartbeatVisibilitySchema,
-    renderMode: RenderModeSchema,
-    streaming: StreamingModeSchema, // Enable streaming card mode (default: true)
-    tools: FeishuToolsConfigSchema,
-    ttsVoiceReply: TtsVoiceReplySchema,
+    ...FeishuSharedConfigShape,
   })
   .strict();
 
@@ -182,30 +167,11 @@ export const FeishuConfigSchema = z
     domain: FeishuDomainSchema.optional().default("feishu"),
     connectionMode: FeishuConnectionModeSchema.optional().default("websocket"),
     webhookPath: z.string().optional().default("/feishu/events"),
-    webhookHost: z.string().optional(),
-    webhookPort: z.number().int().positive().optional(),
-    capabilities: z.array(z.string()).optional(),
-    markdown: MarkdownConfigSchema,
-    configWrites: z.boolean().optional(),
+    ...FeishuSharedConfigShape,
     dmPolicy: DmPolicySchema.optional().default("pairing"),
-    allowFrom: z.array(z.union([z.string(), z.number()])).optional(),
     groupPolicy: GroupPolicySchema.optional().default("allowlist"),
-    groupAllowFrom: z.array(z.union([z.string(), z.number()])).optional(),
     requireMention: z.boolean().optional().default(true),
-    groups: z.record(z.string(), FeishuGroupSchema.optional()).optional(),
     topicSessionMode: TopicSessionModeSchema,
-    historyLimit: z.number().int().min(0).optional(),
-    dmHistoryLimit: z.number().int().min(0).optional(),
-    dms: z.record(z.string(), DmConfigSchema).optional(),
-    textChunkLimit: z.number().int().positive().optional(),
-    chunkMode: z.enum(["length", "newline"]).optional(),
-    blockStreamingCoalesce: BlockStreamingCoalesceSchema,
-    mediaMaxMb: z.number().positive().optional(),
-    heartbeat: ChannelHeartbeatVisibilitySchema,
-    renderMode: RenderModeSchema, // raw = plain text (default), card = interactive card with markdown
-    streaming: StreamingModeSchema, // Enable streaming card mode (default: true)
-    tools: FeishuToolsConfigSchema,
-    ttsVoiceReply: TtsVoiceReplySchema,
     // Dynamic agent creation for DM users
     dynamicAgentCreation: DynamicAgentCreationSchema,
     // Multi-account configuration

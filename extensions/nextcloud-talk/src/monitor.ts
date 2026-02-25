@@ -6,16 +6,16 @@ import {
   readRequestBodyWithLimit,
   requestBodyErrorToText,
 } from "openclaw/plugin-sdk";
+import { resolveNextcloudTalkAccount } from "./accounts.js";
+import { handleNextcloudTalkInbound } from "./inbound.js";
+import { getNextcloudTalkRuntime } from "./runtime.js";
+import { extractNextcloudTalkHeaders, verifyNextcloudTalkSignature } from "./signature.js";
 import type {
   CoreConfig,
   NextcloudTalkInboundMessage,
   NextcloudTalkWebhookPayload,
   NextcloudTalkWebhookServerOptions,
 } from "./types.js";
-import { resolveNextcloudTalkAccount } from "./accounts.js";
-import { handleNextcloudTalkInbound } from "./inbound.js";
-import { getNextcloudTalkRuntime } from "./runtime.js";
-import { extractNextcloudTalkHeaders, verifyNextcloudTalkSignature } from "./signature.js";
 
 const DEFAULT_WEBHOOK_PORT = 8788;
 const DEFAULT_WEBHOOK_HOST = "0.0.0.0";
@@ -92,6 +92,7 @@ export function createNextcloudTalkWebhookServer(opts: NextcloudTalkWebhookServe
     opts.maxBodyBytes > 0
       ? Math.floor(opts.maxBodyBytes)
       : DEFAULT_WEBHOOK_MAX_BODY_BYTES;
+  const readBody = opts.readBody ?? readNextcloudTalkWebhookBody;
 
   const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
     if (req.url === HEALTH_PATH) {
@@ -107,8 +108,6 @@ export function createNextcloudTalkWebhookServer(opts: NextcloudTalkWebhookServe
     }
 
     try {
-      const body = await readNextcloudTalkWebhookBody(req, maxBodyBytes);
-
       const headers = extractNextcloudTalkHeaders(
         req.headers as Record<string, string | string[] | undefined>,
       );
@@ -117,6 +116,8 @@ export function createNextcloudTalkWebhookServer(opts: NextcloudTalkWebhookServe
         res.end(JSON.stringify({ error: "Missing signature headers" }));
         return;
       }
+
+      const body = await readBody(req, maxBodyBytes);
 
       const isValid = verifyNextcloudTalkSignature({
         signature: headers.signature,

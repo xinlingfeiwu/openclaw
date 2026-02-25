@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { AuthProfileStore } from "./auth-profiles/types.js";
 import { resolveAuthProfileOrder } from "./auth-profiles.js";
 import {
   ANTHROPIC_CFG,
   ANTHROPIC_STORE,
 } from "./auth-profiles.resolve-auth-profile-order.fixtures.js";
+import type { AuthProfileStore } from "./auth-profiles/types.js";
 
 describe("resolveAuthProfileOrder", () => {
   const store = ANTHROPIC_STORE;
@@ -115,6 +115,50 @@ describe("resolveAuthProfileOrder", () => {
         },
       });
       expect(order).toEqual(["anthropic:work", "anthropic:default"]);
+    },
+  );
+
+  it.each(["store", "config"] as const)(
+    "keeps OpenRouter explicit order even when cooldown fields exist (%s)",
+    (orderSource) => {
+      const now = Date.now();
+      const explicitOrder = ["openrouter:default", "openrouter:work"];
+      const order = resolveAuthProfileOrder({
+        cfg:
+          orderSource === "config"
+            ? {
+                auth: {
+                  order: { openrouter: explicitOrder },
+                },
+              }
+            : undefined,
+        store: {
+          version: 1,
+          ...(orderSource === "store" ? { order: { openrouter: explicitOrder } } : {}),
+          profiles: {
+            "openrouter:default": {
+              type: "api_key",
+              provider: "openrouter",
+              key: "sk-or-default",
+            },
+            "openrouter:work": {
+              type: "api_key",
+              provider: "openrouter",
+              key: "sk-or-work",
+            },
+          },
+          usageStats: {
+            "openrouter:default": {
+              cooldownUntil: now + 60_000,
+              disabledUntil: now + 120_000,
+              disabledReason: "billing",
+            },
+          },
+        },
+        provider: "openrouter",
+      });
+
+      expect(order).toEqual(explicitOrder);
     },
   );
 

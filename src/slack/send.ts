@@ -4,16 +4,17 @@ import {
   type KnownBlock,
   type WebClient,
 } from "@slack/web-api";
-import type { SlackTokenSource } from "./accounts.js";
 import {
   chunkMarkdownTextWithMode,
   resolveChunkMode,
   resolveTextChunkLimit,
 } from "../auto-reply/chunk.js";
+import { isSilentReplyText } from "../auto-reply/tokens.js";
 import { loadConfig } from "../config/config.js";
 import { resolveMarkdownTableMode } from "../config/markdown-tables.js";
 import { logVerbose } from "../globals.js";
 import { loadWebMedia } from "../web/media.js";
+import type { SlackTokenSource } from "./accounts.js";
 import { resolveSlackAccount } from "./accounts.js";
 import { buildSlackBlocksFallbackText } from "./blocks-fallback.js";
 import { validateSlackBlocksArray } from "./blocks-input.js";
@@ -231,6 +232,10 @@ export async function sendMessageSlack(
   opts: SlackSendOpts = {},
 ): Promise<SlackSendResult> {
   const trimmedMessage = message?.trim() ?? "";
+  if (isSilentReplyText(trimmedMessage) && !opts.mediaUrl && !opts.blocks) {
+    logVerbose("slack send: suppressed NO_REPLY token before API call");
+    return { messageId: "suppressed", channelId: "" };
+  }
   const blocks = opts.blocks == null ? undefined : validateSlackBlocksArray(opts.blocks);
   if (!trimmedMessage && !opts.mediaUrl && !blocks) {
     throw new Error("Slack send requires text, blocks, or media");

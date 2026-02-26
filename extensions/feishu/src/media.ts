@@ -8,6 +8,7 @@ import { normalizeFeishuExternalKey } from "./external-keys.js";
 import { getFeishuRuntime } from "./runtime.js";
 import { assertFeishuMessageApiSuccess, toFeishuSendResult } from "./send-result.js";
 import { resolveFeishuSendTarget } from "./send-target.js";
+import { normalizeFeishuTarget, resolveReceiveIdType } from "./targets.js";
 
 export type DownloadImageResult = {
   buffer: Buffer;

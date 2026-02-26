@@ -1,14 +1,14 @@
-import type { RuntimeEnv } from "../runtime.js";
-import type { OnboardOptions } from "./onboard-types.js";
 import { formatCliCommand } from "../cli/command-format.js";
 import { readConfigFileSnapshot } from "../config/config.js";
 import { assertSupportedRuntime } from "../infra/runtime-guard.js";
+import type { RuntimeEnv } from "../runtime.js";
 import { defaultRuntime } from "../runtime.js";
 import { resolveUserPath } from "../utils.js";
 import { isDeprecatedAuthChoice, normalizeLegacyOnboardAuthChoice } from "./auth-choice-legacy.js";
 import { DEFAULT_WORKSPACE, handleReset } from "./onboard-helpers.js";
 import { runInteractiveOnboarding } from "./onboard-interactive.js";
 import { runNonInteractiveOnboarding } from "./onboard-non-interactive.js";
+import type { OnboardOptions } from "./onboard-types.js";
 
 export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv = defaultRuntime) {
   assertSupportedRuntime(runtime);
@@ -35,6 +35,15 @@ export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv =
     normalizedAuthChoice === opts.authChoice && flow === opts.flow
       ? opts
       : { ...opts, authChoice: normalizedAuthChoice, flow };
+  if (
+    normalizedOpts.secretInputMode &&
+    normalizedOpts.secretInputMode !== "plaintext" &&
+    normalizedOpts.secretInputMode !== "ref"
+  ) {
+    runtime.error('Invalid --secret-input-mode. Use "plaintext" or "ref".');
+    runtime.exit(1);
+    return;
+  }
 
   if (normalizedOpts.nonInteractive && normalizedOpts.acceptRisk !== true) {
     runtime.error(

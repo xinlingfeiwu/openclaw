@@ -5,6 +5,7 @@ import {
   formatAllowlistMatchMeta,
   logInboundDrop,
   logTypingFailure,
+  readStoreAllowFromForDmPolicy,
   resolveControlCommandGate,
   type PluginRuntime,
   type RuntimeEnv,
@@ -213,10 +214,11 @@ export function createMatrixRoomMessageHandler(params: MatrixMonitorHandlerParam
       }
 
       const senderName = await getMemberDisplayName(roomId, senderId);
-      const storeAllowFrom =
-        dmPolicy === "allowlist"
-          ? []
-          : await core.channel.pairing.readAllowFromStore("matrix").catch(() => []);
+      const storeAllowFrom = await readStoreAllowFromForDmPolicy({
+        provider: "matrix",
+        dmPolicy,
+        readStore: (provider) => core.channel.pairing.readAllowFromStore(provider),
+      });
       const effectiveAllowFrom = normalizeMatrixAllowList([...allowFrom, ...storeAllowFrom]);
       const groupAllowFrom = cfg.channels?.matrix?.groupAllowFrom ?? [];
       const effectiveGroupAllowFrom = normalizeMatrixAllowList(groupAllowFrom);
@@ -655,39 +657,37 @@ export function createMatrixRoomMessageHandler(params: MatrixMonitorHandlerParam
           },
         });
 
-      try {
-        const { queuedFinal, counts } = await core.channel.reply.dispatchReplyFromConfig({
-          ctx: ctxPayload,
-          cfg,
-          dispatcher,
-          replyOptions: {
-            ...replyOptions,
-            skillFilter: roomConfig?.skills,
-            onModelSelected,
-          },
-        });
-        if (!queuedFinal) {
-          return;
-        }
-        didSendReply = true;
-        const finalCount = counts.final;
-        logVerboseMessage(
-          `matrix: delivered ${finalCount} reply${finalCount === 1 ? "" : "ies"} to ${replyTarget}`,
-        );
-        if (didSendReply) {
-          const previewText = bodyText.replace(/\s+/g, " ").slice(0, 160);
-          core.system.enqueueSystemEvent(`Matrix message from ${senderName}: ${previewText}`, {
-            sessionKey: route.sessionKey,
-            contextKey: `matrix:message:${roomId}:${messageId || "unknown"}`,
-          });
-        }
-      } finally {
-        dispatcher.markComplete();
-        try {
-          await dispatcher.waitForIdle();
-        } finally {
+      const { queuedFinal, counts } = await core.channel.reply.withReplyDispatcher({
+        dispatcher,
+        onSettled: () => {
           markDispatchIdle();
-        }
+        },
+        run: () =>
+          core.channel.reply.dispatchReplyFromConfig({
+            ctx: ctxPayload,
+            cfg,
+            dispatcher,
+            replyOptions: {
+              ...replyOptions,
+              skillFilter: roomConfig?.skills,
+              onModelSelected,
+            },
+          }),
+      });
+      if (!queuedFinal) {
+        return;
+      }
+      didSendReply = true;
+      const finalCount = counts.final;
+      logVerboseMessage(
+        `matrix: delivered ${finalCount} reply${finalCount === 1 ? "" : "ies"} to ${replyTarget}`,
+      );
+      if (didSendReply) {
+        const previewText = bodyText.replace(/\s+/g, " ").slice(0, 160);
+        core.system.enqueueSystemEvent(`Matrix message from ${senderName}: ${previewText}`, {
+          sessionKey: route.sessionKey,
+          contextKey: `matrix:message:${roomId}:${messageId || "unknown"}`,
+        });
       }
     } catch (err) {
       runtime.error?.(`matrix handler failed: ${String(err)}`);

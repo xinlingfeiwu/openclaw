@@ -287,8 +287,13 @@ export function createFeishuReplyDispatcher(params: CreateFeishuReplyDispatcherP
 
         // ── Text delivery ──
         const text = payload.text ?? "";
-        const mediaList =
-          payload.mediaUrls && payload.mediaUrls.length > 0
+        // Exclude audio-as-voice media when voice mode is off — it was already
+        // attempted (and intentionally skipped) in the media delivery block above.
+        // Sending it here would result in a Feishu API 400 error.
+        const skipAudioMedia = payload.audioAsVoice && !voiceReplyRequested;
+        const mediaList = skipAudioMedia
+          ? []
+          : payload.mediaUrls && payload.mediaUrls.length > 0
             ? payload.mediaUrls
             : payload.mediaUrl
               ? [payload.mediaUrl]

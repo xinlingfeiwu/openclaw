@@ -168,6 +168,7 @@ const FeishuSharedConfigShape = {
   resolveSenderNames: z.boolean().optional(),
   ttsVoiceReply: z
     .object({
+      enabled: z.boolean().optional(),
       backend: z.enum(["indextts", "say"]).optional(),
       indexTtsUrl: z.string().optional(),
       referenceAudio: z.string().optional(),

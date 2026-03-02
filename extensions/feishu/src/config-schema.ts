@@ -166,6 +166,16 @@ const FeishuSharedConfigShape = {
   reactionNotifications: ReactionNotificationModeSchema,
   typingIndicator: z.boolean().optional(),
   resolveSenderNames: z.boolean().optional(),
+  ttsVoiceReply: z
+    .object({
+      backend: z.enum(["indextts", "say"]).optional(),
+      indexTtsUrl: z.string().optional(),
+      referenceAudio: z.string().optional(),
+      voice: z.string().optional(),
+      rate: z.number().optional(),
+      fallbackToText: z.boolean().optional(),
+    })
+    .optional(),
 };
 
 /**

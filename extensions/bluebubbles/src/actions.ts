@@ -11,7 +11,6 @@ import {
   type ChannelMessageActionAdapter,
   type ChannelMessageActionName,
 } from "openclaw/plugin-sdk";
-import type { BlueBubblesSendTarget } from "./types.js";
 import { resolveBlueBubblesAccount } from "./accounts.js";
 import { sendBlueBubblesAttachment } from "./attachments.js";
 import {
@@ -26,8 +25,10 @@ import {
 import { resolveBlueBubblesMessageId } from "./monitor.js";
 import { getCachedBlueBubblesPrivateApiStatus, isMacOS26OrHigher } from "./probe.js";
 import { sendBlueBubblesReaction } from "./reactions.js";
+import { normalizeSecretInputString } from "./secret-input.js";
 import { resolveChatGuidForTarget, sendMessageBlueBubbles } from "./send.js";
 import { normalizeBlueBubblesHandle, parseBlueBubblesTarget } from "./targets.js";
+import type { BlueBubblesSendTarget } from "./types.js";
 
 const providerId = "bluebubbles";
 
@@ -102,8 +103,8 @@ export const bluebubblesMessageActions: ChannelMessageActionAdapter = {
       cfg: cfg,
       accountId: accountId ?? undefined,
     });
-    const baseUrl = account.config.serverUrl?.trim();
-    const password = account.config.password?.trim();
+    const baseUrl = normalizeSecretInputString(account.config.serverUrl);
+    const password = normalizeSecretInputString(account.config.password);
     const opts = { cfg: cfg, accountId: accountId ?? undefined };
     const assertPrivateApiEnabled = () => {
       if (getCachedBlueBubblesPrivateApiStatus(account.accountId) === false) {

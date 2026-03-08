@@ -1632,6 +1632,102 @@ export const GENERATED_BUNDLED_PLUGIN_METADATA = [
     },
   },
   {
+    dirName: "mcp-bridge",
+    idHint: "mcp-bridge",
+    source: {
+      source: "./index.ts",
+      built: "index.js",
+    },
+    packageName: "@openclaw/mcp-bridge",
+    packageVersion: "2026.3.3",
+    packageDescription: "OpenClaw MCP bridge plugin",
+    packageManifest: {
+      extensions: ["./index.ts"],
+    },
+    manifest: {
+      id: "mcp-bridge",
+      configSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          servers: {
+            type: "object",
+            description: "MCP server configurations keyed by server name.",
+            additionalProperties: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                transport: {
+                  type: "string",
+                  enum: ["http", "stdio"],
+                },
+                url: {
+                  type: "string",
+                  description: "MCP server URL for HTTP transport.",
+                },
+                command: {
+                  type: "string",
+                  description: "Command to start the MCP server for stdio transport.",
+                },
+                args: {
+                  type: "array",
+                  items: {
+                    type: "string",
+                  },
+                  description: "Arguments passed to the stdio command.",
+                },
+                env: {
+                  type: "object",
+                  additionalProperties: {
+                    type: "string",
+                  },
+                  description: "Environment variables for the MCP server process.",
+                },
+                enabled: {
+                  type: "boolean",
+                },
+                description: {
+                  type: "string",
+                },
+              },
+            },
+          },
+        },
+      },
+      name: "MCP Bridge",
+      description: "Connect MCP servers and expose their tools as native OpenClaw tools.",
+      uiHints: {
+        servers: {
+          label: "MCP Servers",
+          help: "Configure MCP servers to connect. Legacy top-level mcpServers is also supported.",
+        },
+        "servers.*.transport": {
+          label: "Transport",
+        },
+        "servers.*.url": {
+          label: "HTTP URL",
+        },
+        "servers.*.command": {
+          label: "Command",
+        },
+        "servers.*.args": {
+          label: "Arguments",
+        },
+        "servers.*.env": {
+          label: "Environment Variables",
+          advanced: true,
+        },
+        "servers.*.enabled": {
+          label: "Enabled",
+        },
+        "servers.*.description": {
+          label: "Description",
+          advanced: true,
+        },
+      },
+    },
+  },
+  {
     dirName: "memory-core",
     idHint: "memory-core",
     source: {

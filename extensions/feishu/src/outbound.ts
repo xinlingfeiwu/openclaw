@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { ChannelOutboundAdapter } from "openclaw/plugin-sdk";
+import type { ChannelOutboundAdapter } from "openclaw/plugin-sdk/feishu";
 import { resolveFeishuAccount } from "./accounts.js";
 import { MediaDeliveryManager } from "./media-delivery.js";
 import { sendMediaFeishu } from "./media.js";
@@ -49,27 +49,55 @@ function shouldUseCard(text: string): boolean {
   return /```[\s\S]*?```/.test(text) || /\|.+\|[\r\n]+\|[-:| ]+\|/.test(text);
 }
 
+function resolveReplyToMessageId(params: {
+  replyToId?: string | null;
+  threadId?: string | number | null;
+}): string | undefined {
+  const replyToId = params.replyToId?.trim();
+  if (replyToId) {
+    return replyToId;
+  }
+  if (params.threadId == null) {
+    return undefined;
+  }
+  const trimmed = String(params.threadId).trim();
+  return trimmed || undefined;
+}
+
 async function sendOutboundText(params: {
   cfg: Parameters<typeof sendMessageFeishu>[0]["cfg"];
   to: string;
   text: string;
+  replyToMessageId?: string;
   accountId?: string;
 }) {
-  const { cfg, to, text, accountId } = params;
+  const { cfg, to, text, accountId, replyToMessageId } = params;
   const account = resolveFeishuAccount({ cfg, accountId });
   const renderMode = account.config?.renderMode ?? "auto";
 
   if (renderMode === "card" || (renderMode === "auto" && shouldUseCard(text))) {
     // Split by table limit to avoid Feishu CardKit error 11310 (card table number over limit)
     const segments = splitByTableLimit(text, FEISHU_CARD_MAX_TABLES);
-    let result = await sendMarkdownCardFeishu({ cfg, to, text: segments[0], accountId });
+    let result = await sendMarkdownCardFeishu({
+      cfg,
+      to,
+      text: segments[0],
+      accountId,
+      replyToMessageId,
+    });
     for (let i = 1; i < segments.length; i++) {
-      result = await sendMarkdownCardFeishu({ cfg, to, text: segments[i], accountId });
+      result = await sendMarkdownCardFeishu({
+        cfg,
+        to,
+        text: segments[i],
+        accountId,
+        replyToMessageId,
+      });
     }
     return result;
   }
 
-  return sendMessageFeishu({ cfg, to, text, accountId });
+  return sendMessageFeishu({ cfg, to, text, accountId, replyToMessageId });
 }
 
 /** Audio extensions that need opus conversion before sending */
@@ -91,7 +119,8 @@ export const feishuOutbound: ChannelOutboundAdapter = {
   chunker: (text, limit) => getFeishuRuntime().channel.text.chunkMarkdownText(text, limit),
   chunkerMode: "markdown",
   textChunkLimit: 4000,
-  sendText: async ({ cfg, to, text, accountId }) => {
+  sendText: async ({ cfg, to, text, accountId, replyToId, threadId }) => {
+    const replyToMessageId = resolveReplyToMessageId({ replyToId, threadId });
     // Scheme A compatibility shim:
     // when upstream accidentally returns a local image path as plain text,
     // auto-upload and send as Feishu image message instead of leaking path text.
@@ -103,6 +132,7 @@ export const feishuOutbound: ChannelOutboundAdapter = {
           to,
           mediaUrl: localImagePath,
           accountId: accountId ?? undefined,
+          replyToMessageId,
         });
         return { channel: "feishu", ...result };
       } catch (err) {
@@ -116,10 +146,21 @@ export const feishuOutbound: ChannelOutboundAdapter = {
       to,
       text,
       accountId: accountId ?? undefined,
+      replyToMessageId,
     });
     return { channel: "feishu", ...result };
   },
-  sendMedia: async ({ cfg, to, text, mediaUrl, accountId, mediaLocalRoots }) => {
+  sendMedia: async ({
+    cfg,
+    to,
+    text,
+    mediaUrl,
+    accountId,
+    mediaLocalRoots,
+    replyToId,
+    threadId,
+  }) => {
+    const replyToMessageId = resolveReplyToMessageId({ replyToId, threadId });
     // Send text first if provided
     if (text?.trim()) {
       await sendOutboundText({
@@ -127,6 +168,7 @@ export const feishuOutbound: ChannelOutboundAdapter = {
         to,
         text,
         accountId: accountId ?? undefined,
+        replyToMessageId,
       });
     }
 
@@ -157,6 +199,7 @@ export const feishuOutbound: ChannelOutboundAdapter = {
           mediaUrl,
           accountId: accountId ?? undefined,
           mediaLocalRoots,
+          replyToMessageId,
         });
         return { channel: "feishu", ...result };
       } catch (err) {
@@ -169,6 +212,7 @@ export const feishuOutbound: ChannelOutboundAdapter = {
           to,
           text: fallbackText,
           accountId: accountId ?? undefined,
+          replyToMessageId,
         });
         return { channel: "feishu", ...result };
       }
@@ -180,6 +224,7 @@ export const feishuOutbound: ChannelOutboundAdapter = {
       to,
       text: text ?? "",
       accountId: accountId ?? undefined,
+      replyToMessageId,
     });
     return { channel: "feishu", ...result };
   },

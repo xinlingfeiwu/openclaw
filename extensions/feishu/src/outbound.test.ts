@@ -11,10 +11,14 @@ vi.mock("./media.js", () => ({
   sendMediaFeishu: sendMediaFeishuMock,
 }));
 
-vi.mock("./send.js", () => ({
-  sendMessageFeishu: sendMessageFeishuMock,
-  sendMarkdownCardFeishu: sendMarkdownCardFeishuMock,
-}));
+vi.mock("./send.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./send.js")>();
+  return {
+    ...actual,
+    sendMessageFeishu: sendMessageFeishuMock,
+    sendMarkdownCardFeishu: sendMarkdownCardFeishuMock,
+  };
+});
 
 vi.mock("./runtime.js", () => ({
   getFeishuRuntime: () => ({

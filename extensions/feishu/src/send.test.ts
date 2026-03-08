@@ -1,6 +1,6 @@
 import type { ClawdbotConfig } from "openclaw/plugin-sdk";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getMessageFeishu } from "./send.js";
+import { getMessageFeishu, splitByTableLimit } from "./send.js";
 
 const { mockClientGet, mockCreateFeishuClient, mockResolveFeishuAccount } = vi.hoisted(() => ({
   mockClientGet: vi.fn(),
@@ -164,5 +164,53 @@ describe("getMessageFeishu", () => {
         content: "single payload",
       }),
     );
+  });
+});
+
+describe("splitByTableLimit", () => {
+  const table1 = "| A | B |\n|---|---|\n| 1 | 2 |";
+  const table2 = "| C | D |\n|---|---|\n| 3 | 4 |";
+  const table3 = "| E | F |\n|---|---|\n| 5 | 6 |";
+  const table4 = "| G | H |\n|---|---|\n| 7 | 8 |";
+
+  it("returns original text when there are no tables", () => {
+    const text = "No tables here.";
+    expect(splitByTableLimit(text, 3)).toEqual([text]);
+  });
+
+  it("returns original text when tables are within limit", () => {
+    const text = `${table1}\n\n${table2}`;
+    expect(splitByTableLimit(text, 3)).toEqual([text]);
+  });
+
+  it("returns original text when tables exactly equal limit", () => {
+    const text = `${table1}\n\n${table2}\n\n${table3}`;
+    expect(splitByTableLimit(text, 3)).toEqual([text]);
+  });
+
+  it("splits into two segments when tables exceed limit", () => {
+    const text = `${table1}\n\n${table2}\n\n${table3}\n\n${table4}`;
+    const result = splitByTableLimit(text, 3);
+    expect(result).toHaveLength(2);
+    // First segment should contain exactly 3 tables
+    expect(result[0]).toContain("| A |");
+    expect(result[0]).toContain("| C |");
+    expect(result[0]).toContain("| E |");
+    expect(result[0]).not.toContain("| G |");
+    // Second segment should contain the 4th table
+    expect(result[1]).toContain("| G |");
+  });
+
+  it("handles limit of 1 table per segment", () => {
+    const text = `intro\n\n${table1}\n\nmiddle\n\n${table2}\n\nend`;
+    const result = splitByTableLimit(text, 1);
+    expect(result).toHaveLength(2);
+    // intro and middle (before table2) are in the first segment
+    expect(result[0]).toContain("intro");
+    expect(result[0]).toContain("| A |");
+    expect(result[0]).toContain("middle");
+    // second segment starts at table2
+    expect(result[1]).toContain("| C |");
+    expect(result[1]).toContain("end");
   });
 });

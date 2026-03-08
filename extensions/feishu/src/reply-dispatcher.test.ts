@@ -14,10 +14,14 @@ const streamingInstances = vi.hoisted(() => [] as any[]);
 
 vi.mock("./accounts.js", () => ({ resolveFeishuAccount: resolveFeishuAccountMock }));
 vi.mock("./runtime.js", () => ({ getFeishuRuntime: getFeishuRuntimeMock }));
-vi.mock("./send.js", () => ({
-  sendMessageFeishu: sendMessageFeishuMock,
-  sendMarkdownCardFeishu: sendMarkdownCardFeishuMock,
-}));
+vi.mock("./send.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./send.js")>();
+  return {
+    ...actual,
+    sendMessageFeishu: sendMessageFeishuMock,
+    sendMarkdownCardFeishu: sendMarkdownCardFeishuMock,
+  };
+});
 vi.mock("./media.js", () => ({ sendMediaFeishu: sendMediaFeishuMock }));
 vi.mock("./client.js", () => ({ createFeishuClient: createFeishuClientMock }));
 vi.mock("./targets.js", () => ({ resolveReceiveIdType: resolveReceiveIdTypeMock }));

@@ -5,7 +5,12 @@ import { resolveFeishuAccount } from "./accounts.js";
 import { MediaDeliveryManager } from "./media-delivery.js";
 import { sendMediaFeishu } from "./media.js";
 import { getFeishuRuntime } from "./runtime.js";
-import { sendMarkdownCardFeishu, sendMessageFeishu } from "./send.js";
+import {
+  sendMarkdownCardFeishu,
+  sendMessageFeishu,
+  splitByTableLimit,
+  FEISHU_CARD_MAX_TABLES,
+} from "./send.js";
 
 function normalizePossibleLocalImagePath(text: string | undefined): string | null {
   const raw = text?.trim();
@@ -55,7 +60,13 @@ async function sendOutboundText(params: {
   const renderMode = account.config?.renderMode ?? "auto";
 
   if (renderMode === "card" || (renderMode === "auto" && shouldUseCard(text))) {
-    return sendMarkdownCardFeishu({ cfg, to, text, accountId });
+    // Split by table limit to avoid Feishu CardKit error 11310 (card table number over limit)
+    const segments = splitByTableLimit(text, FEISHU_CARD_MAX_TABLES);
+    let result = await sendMarkdownCardFeishu({ cfg, to, text: segments[0], accountId });
+    for (let i = 1; i < segments.length; i++) {
+      result = await sendMarkdownCardFeishu({ cfg, to, text: segments[i], accountId });
+    }
+    return result;
   }
 
   return sendMessageFeishu({ cfg, to, text, accountId });

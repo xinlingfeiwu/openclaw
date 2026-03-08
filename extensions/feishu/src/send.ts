@@ -354,6 +354,42 @@ export async function updateCardFeishu(params: {
 }
 
 /**
+ * Feishu CardKit limit: max number of Markdown tables per card.
+ * Exceeding this causes error code 230099 / 11310 (card table number over limit).
+ */
+export const FEISHU_CARD_MAX_TABLES = 3;
+
+/**
+ * Split markdown text into segments such that each segment contains at most
+ * `maxTables` Markdown tables. Used to avoid Feishu CardKit error 11310.
+ *
+ * A Markdown table is detected by a header row (`| ... |`) immediately followed
+ * by a separator row (`|---|...|`). The split point is placed just before the
+ * line that would push a segment over the limit.
+ */
+export function splitByTableLimit(text: string, maxTables: number): string[] {
+  if (maxTables <= 0) {
+    return [text];
+  }
+  // Match a table header: a line starting with | and followed (on the next line)
+  // by a separator row of |---| patterns.
+  const tablePattern = /^(\|[^\n]*\|\r?\n\|[-:| ]+\|)/gm;
+  const tableStarts: number[] = [];
+  let match;
+  while ((match = tablePattern.exec(text)) !== null) {
+    tableStarts.push(match.index);
+  }
+  if (tableStarts.length <= maxTables) {
+    return [text];
+  }
+  // Split just before the (maxTables+1)th table
+  const splitIndex = tableStarts[maxTables];
+  const first = text.slice(0, splitIndex).trimEnd();
+  const rest = text.slice(splitIndex);
+  return [first, ...splitByTableLimit(rest, maxTables)];
+}
+
+/**
  * Build a Feishu interactive card with markdown content.
  * Cards render markdown properly (code blocks, tables, links, etc.)
  * Uses schema 2.0 format for proper markdown rendering.

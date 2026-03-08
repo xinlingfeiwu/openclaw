@@ -12,7 +12,12 @@ import { MediaDeliveryManager, type MediaDeliveryContext } from "./media-deliver
 import { sendMediaFeishu } from "./media.js";
 import { buildMentionedCardContent, type MentionTarget } from "./mention.js";
 import { getFeishuRuntime } from "./runtime.js";
-import { sendMarkdownCardFeishu, sendMessageFeishu } from "./send.js";
+import {
+  sendMarkdownCardFeishu,
+  sendMessageFeishu,
+  splitByTableLimit,
+  FEISHU_CARD_MAX_TABLES,
+} from "./send.js";
 import { FeishuStreamingSession } from "./streaming-card.js";
 import { resolveReceiveIdType } from "./targets.js";
 import { PluginTtsEngine } from "./tts.js";
@@ -251,7 +256,13 @@ export function createFeishuReplyDispatcher(params: CreateFeishuReplyDispatcherP
       if (mentionTargets?.length) {
         text = buildMentionedCardContent(mentionTargets, text);
       }
-      await streaming.close(text);
+      // Split into segments to avoid Feishu CardKit error 11310 (card table number over limit)
+      const segments = splitByTableLimit(text, FEISHU_CARD_MAX_TABLES);
+      await streaming.close(segments[0]);
+      // Send overflow segments as follow-up card messages
+      for (let i = 1; i < segments.length; i++) {
+        await sendMarkdownCardFeishu({ cfg, to: chatId, text: segments[i], accountId });
+      }
     }
     streaming = null;
     streamingStartPromise = null;
@@ -415,16 +426,19 @@ export function createFeishuReplyDispatcher(params: CreateFeishuReplyDispatcherP
               textChunkLimit,
               chunkMode,
             )) {
-              await sendMarkdownCardFeishu({
-                cfg,
-                to: chatId,
-                text: chunk,
-                replyToMessageId: sendReplyToMessageId,
-                replyInThread: effectiveReplyInThread,
-                mentions: first ? mentionTargets : undefined,
-                accountId,
-              });
-              first = false;
+              // Split each chunk by table limit to avoid CardKit error 11310
+              for (const segment of splitByTableLimit(chunk, FEISHU_CARD_MAX_TABLES)) {
+                await sendMarkdownCardFeishu({
+                  cfg,
+                  to: chatId,
+                  text: segment,
+                  replyToMessageId: sendReplyToMessageId,
+                  replyInThread: effectiveReplyInThread,
+                  mentions: first ? mentionTargets : undefined,
+                  accountId,
+                });
+                first = false;
+              }
             }
           } else {
             const converted = core.channel.text.convertMarkdownTables(text, tableMode);

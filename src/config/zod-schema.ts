@@ -153,6 +153,15 @@ const PluginEntrySchema = z
   })
   .strict();
 
+const McpServerEntrySchema = z
+  .object({
+    command: z.string(),
+    args: z.array(z.string()).optional(),
+    env: z.record(z.string(), z.string()).optional(),
+    description: z.string().optional(),
+  })
+  .strict();
+
 export const OpenClawSchema = z
   .object({
     $schema: z.string().optional(),
@@ -831,6 +840,7 @@ export const OpenClawSchema = z
       })
       .strict()
       .optional(),
+    mcpServers: z.record(z.string(), McpServerEntrySchema).optional(),
   })
   .strict()
   .superRefine((cfg, ctx) => {

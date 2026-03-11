@@ -496,6 +496,86 @@ describe("gateway server chat", () => {
     ]);
   });
 
+  test("chat.history hides internal memory flush turns and post-compaction prompts", async () => {
+    const historyMessages = await loadChatHistoryWithMessages([
+      {
+        role: "user",
+        content: [{ type: "text", text: "hello" }],
+        timestamp: 1,
+      },
+      {
+        role: "assistant",
+        content: [{ type: "text", text: "real reply" }],
+        timestamp: 2,
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "Pre-compaction memory flush. Store durable memories now (use memory/2026-03-11.md; create memory/ if needed). IMPORTANT: If the file already exists, APPEND new content only — do not overwrite existing entries. Do NOT create timestamped variant files (e.g., 2026-03-11-HHMM.md); always use the canonical 2026-03-11.md filename. If nothing to store, reply with NO_REPLY.\nCurrent time: Wednesday, March 11th, 2026 — 4:54 PM (Asia/Shanghai) / 2026-03-11 08:54 UTC",
+          },
+        ],
+        timestamp: 3,
+      },
+      {
+        role: "assistant",
+        content: [],
+        timestamp: 4,
+      },
+      {
+        role: "toolResult",
+        content: [{ type: "text", text: "memory saved" }],
+        timestamp: 5,
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "System: [2026-03-11 16:40:19 GMT+8] [Post-compaction context refresh]\nSystem: \nSystem: Session was just compacted. The conversation summary above is a hint, NOT a substitute for your startup sequence. Execute your Session Startup sequence now — read the required files before responding to the user.\nSystem: \nSystem: Critical rules from AGENTS.md:\nSystem: \nSystem: 1. Read SOUL.md\nSystem: 2. Read USER.md",
+          },
+        ],
+        timestamp: 6,
+      },
+      {
+        role: "assistant",
+        content: [{ type: "text", text: "back to the real task" }],
+        timestamp: 7,
+      },
+      {
+        role: "user",
+        content: [{ type: "text", text: "next user turn" }],
+        timestamp: 8,
+      },
+    ]);
+
+    const roleAndText = historyMessages
+      .map((message) => {
+        const role =
+          message &&
+          typeof message === "object" &&
+          typeof (message as { role?: unknown }).role === "string"
+            ? (message as { role: string }).role
+            : "unknown";
+        const text =
+          message &&
+          typeof message === "object" &&
+          typeof (message as { text?: unknown }).text === "string"
+            ? (message as { text: string }).text
+            : (extractFirstTextBlock(message) ?? "");
+        return `${role}:${text}`;
+      })
+      .filter((entry) => entry !== "unknown:");
+
+    expect(roleAndText).toEqual([
+      "user:hello",
+      "assistant:real reply",
+      "assistant:back to the real task",
+      "user:next user turn",
+    ]);
+  });
+
   test("agent.wait resolves chat.send runs that finish without lifecycle events", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-gw-"));
     try {

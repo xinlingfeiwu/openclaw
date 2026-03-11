@@ -357,20 +357,11 @@ function sanitizeChatHistoryMessage(message: unknown): { message: unknown; chang
   return { message: changed ? entry : message, changed };
 }
 
-/**
- * Extract the visible text from an assistant history message for silent-token checks.
- * Returns `undefined` for non-assistant messages or messages with no extractable text.
- * When `entry.text` is present it takes precedence over `entry.content` to avoid
- * dropping messages that carry real text alongside a stale `content: "NO_REPLY"`.
- */
-function extractAssistantTextForSilentCheck(message: unknown): string | undefined {
+function extractVisibleTextFromHistoryMessage(message: unknown): string | undefined {
   if (!message || typeof message !== "object") {
     return undefined;
   }
   const entry = message as Record<string, unknown>;
-  if (entry.role !== "assistant") {
-    return undefined;
-  }
   if (typeof entry.text === "string") {
     return entry.text;
   }
@@ -395,15 +386,94 @@ function extractAssistantTextForSilentCheck(message: unknown): string | undefine
   return texts.length > 0 ? texts.join("\n") : undefined;
 }
 
+function classifyInternalChatHistoryUserMessage(
+  message: unknown,
+): "memory_flush" | "post_compaction" | "session_reset" | null {
+  if (!message || typeof message !== "object") {
+    return null;
+  }
+  const entry = message as Record<string, unknown>;
+  if (entry.role !== "user") {
+    return null;
+  }
+  const text = extractVisibleTextFromHistoryMessage(message)?.trim();
+  if (!text) {
+    return null;
+  }
+  if (
+    text.startsWith("Pre-compaction memory flush.") &&
+    text.includes("Store durable memories now") &&
+    text.includes("If nothing to store, reply with NO_REPLY")
+  ) {
+    return "memory_flush";
+  }
+  if (
+    text.startsWith("System: [") &&
+    text.includes("[Post-compaction context refresh]") &&
+    text.includes("Execute your Session Startup sequence now")
+  ) {
+    return "post_compaction";
+  }
+  if (
+    text.includes("A new session was started via /new or /reset.") &&
+    text.includes("Execute your Session Startup sequence now")
+  ) {
+    return "session_reset";
+  }
+  return null;
+}
+
+/**
+ * Extract the visible text from an assistant history message for silent-token checks.
+ * Returns `undefined` for non-assistant messages or messages with no extractable text.
+ * When `entry.text` is present it takes precedence over `entry.content` to avoid
+ * dropping messages that carry real text alongside a stale `content: "NO_REPLY"`.
+ */
+function extractAssistantTextForSilentCheck(message: unknown): string | undefined {
+  if (!message || typeof message !== "object") {
+    return undefined;
+  }
+  const entry = message as Record<string, unknown>;
+  if (entry.role !== "assistant") {
+    return undefined;
+  }
+  return extractVisibleTextFromHistoryMessage(message);
+}
+
 function sanitizeChatHistoryMessages(messages: unknown[]): unknown[] {
   if (messages.length === 0) {
     return messages;
   }
   let changed = false;
   const next: unknown[] = [];
+  let suppressInternalMemoryFlushTurn = false;
   for (const message of messages) {
     const res = sanitizeChatHistoryMessage(message);
     changed ||= res.changed;
+    const internalKind = classifyInternalChatHistoryUserMessage(res.message);
+    if (internalKind === "memory_flush") {
+      changed = true;
+      suppressInternalMemoryFlushTurn = true;
+      continue;
+    }
+    if (internalKind === "post_compaction" || internalKind === "session_reset") {
+      changed = true;
+      suppressInternalMemoryFlushTurn = false;
+      continue;
+    }
+    const role =
+      res.message &&
+      typeof res.message === "object" &&
+      typeof (res.message as { role?: unknown }).role === "string"
+        ? (res.message as { role: string }).role
+        : "";
+    if (suppressInternalMemoryFlushTurn) {
+      if (role !== "user") {
+        changed = true;
+        continue;
+      }
+      suppressInternalMemoryFlushTurn = false;
+    }
     // Drop assistant messages whose entire visible text is the silent reply token.
     const text = extractAssistantTextForSilentCheck(res.message);
     if (text !== undefined && isSilentReplyText(text, SILENT_REPLY_TOKEN)) {

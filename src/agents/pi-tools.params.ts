@@ -136,12 +136,26 @@ export function patchToolSchemaForClaudeCompatibility(tool: AnyAgentTool): AnyAg
     { original: "newText", alias: "new_string" },
   ];
 
+  const cloneSchemaFragment = (value: unknown): unknown => {
+    if (Array.isArray(value)) {
+      return value.map((entry) => cloneSchemaFragment(entry));
+    }
+    if (!value || typeof value !== "object") {
+      return value;
+    }
+    const cloned: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      cloned[key] = cloneSchemaFragment(entry);
+    }
+    return cloned;
+  };
+
   for (const { original, alias } of aliasPairs) {
     if (!(original in properties)) {
       continue;
     }
     if (!(alias in properties)) {
-      properties[alias] = properties[original];
+      properties[alias] = cloneSchemaFragment(properties[original]);
       changed = true;
     }
     const idx = required.indexOf(original);

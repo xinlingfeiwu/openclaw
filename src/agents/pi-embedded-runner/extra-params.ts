@@ -422,6 +422,14 @@ export function applyExtraParamsToAgent(
     agent.streamFn = createBedrockNoCacheWrapper(agent.streamFn);
   }
 
+  // GitHub Copilot's Anthropic-format endpoint does not support cache_control.
+  // pi-ai defaults to cacheRetention="short" which adds cache_control to system
+  // and message blocks, causing a 400 from the endpoint. Force cacheRetention="none".
+  if (provider === "github-copilot") {
+    log.debug(`disabling prompt caching for github-copilot model ${provider}/${modelId}`);
+    agent.streamFn = createBedrockNoCacheWrapper(agent.streamFn);
+  }
+
   // Enable Z.AI tool_stream for real-time tool call streaming.
   // Enabled by default for Z.AI provider, can be disabled via params.tool_stream: false
   if (provider === "zai" || provider === "z-ai") {

@@ -86,7 +86,7 @@ describe("createOpenClawCodingTools", () => {
         label: "write",
         description: "test",
         parameters: Type.Object({
-          path: Type.String({ description: "Path" }),
+          path: Type.String({ description: "Path", enum: ["a.txt", "b.txt"] }),
           content: Type.String({ description: "Body" }),
         }),
         execute: vi.fn(),
@@ -99,7 +99,15 @@ describe("createOpenClawCodingTools", () => {
       };
       const props = params.properties ?? {};
 
-      expect(props.file_path).toEqual(props.path);
+      expect(props.file_path).toMatchObject({
+        description: "Path",
+        type: "string",
+        enum: ["a.txt", "b.txt"],
+      });
+      expect(props.file_path).not.toBe(props.path);
+      expect((props.file_path as { enum?: unknown[] }).enum).not.toBe(
+        (props.path as { enum?: unknown[] }).enum,
+      );
       expect(params.required ?? []).not.toContain("path");
       expect(params.required ?? []).not.toContain("file_path");
     });

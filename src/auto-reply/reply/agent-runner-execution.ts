@@ -72,6 +72,75 @@ export type AgentRunLoopResult =
     }
   | { kind: "final"; payload: ReplyPayload };
 
+type FallbackSessionCheckpoint = {
+  sessionFile: string;
+  transcriptExisted: boolean;
+  transcriptContents?: string;
+  sessionKey?: string;
+  sessionEntrySnapshot?: SessionEntry;
+};
+
+function cloneSessionEntry(entry: SessionEntry | undefined): SessionEntry | undefined {
+  return entry ? structuredClone(entry) : undefined;
+}
+
+function captureFallbackSessionCheckpoint(params: {
+  sessionFile: string;
+  sessionKey?: string;
+  getActiveSessionEntry: () => SessionEntry | undefined;
+}): FallbackSessionCheckpoint {
+  const transcriptExisted = fs.existsSync(params.sessionFile);
+  return {
+    sessionFile: params.sessionFile,
+    transcriptExisted,
+    transcriptContents: transcriptExisted
+      ? fs.readFileSync(params.sessionFile, "utf-8")
+      : undefined,
+    sessionKey: params.sessionKey,
+    sessionEntrySnapshot: cloneSessionEntry(params.getActiveSessionEntry()),
+  };
+}
+
+async function restoreFallbackSessionCheckpoint(
+  checkpoint: FallbackSessionCheckpoint,
+  params: {
+    activeSessionStore?: Record<string, SessionEntry>;
+    storePath?: string;
+  },
+): Promise<void> {
+  if (checkpoint.transcriptExisted) {
+    fs.writeFileSync(checkpoint.sessionFile, checkpoint.transcriptContents ?? "", "utf-8");
+  } else if (fs.existsSync(checkpoint.sessionFile)) {
+    fs.unlinkSync(checkpoint.sessionFile);
+  }
+
+  const sessionKey = checkpoint.sessionKey?.trim();
+  if (!sessionKey) {
+    return;
+  }
+
+  const restoredEntry = cloneSessionEntry(checkpoint.sessionEntrySnapshot);
+  if (params.activeSessionStore) {
+    if (restoredEntry) {
+      params.activeSessionStore[sessionKey] = restoredEntry;
+    } else {
+      delete params.activeSessionStore[sessionKey];
+    }
+  }
+
+  if (!params.storePath) {
+    return;
+  }
+
+  await updateSessionStore(params.storePath, (store) => {
+    if (restoredEntry) {
+      store[sessionKey] = restoredEntry;
+    } else {
+      delete store[sessionKey];
+    }
+  });
+}
+
 export async function runAgentTurnWithFallback(params: {
   commandBody: string;
   followupRun: FollowupRun;
@@ -142,6 +211,7 @@ export async function runAgentTurnWithFallback(params: {
   let bootstrapPromptWarningSignaturesSeen = resolveBootstrapWarningSignaturesSeen(
     params.getActiveSessionEntry()?.systemPromptReport,
   );
+  let currentFallbackCheckpoint: FallbackSessionCheckpoint | null = null;
 
   while (true) {
     try {
@@ -199,7 +269,25 @@ export async function runAgentTurnWithFallback(params: {
       const onToolResult = params.opts?.onToolResult;
       const fallbackResult = await runWithModelFallback({
         ...resolveModelFallbackOptions(params.followupRun.run),
+        onError: async ({ attempt, total }) => {
+          const checkpoint = currentFallbackCheckpoint;
+          currentFallbackCheckpoint = null;
+          // Only intermediate failovers should roll back their transcript writes.
+          // The final failed candidate should remain visible to preserve the last error context.
+          if (!checkpoint || attempt >= total) {
+            return;
+          }
+          await restoreFallbackSessionCheckpoint(checkpoint, {
+            activeSessionStore: params.activeSessionStore,
+            storePath: params.storePath,
+          });
+        },
         run: (provider, model, runOptions) => {
+          currentFallbackCheckpoint = captureFallbackSessionCheckpoint({
+            sessionFile: params.followupRun.run.sessionFile,
+            sessionKey: params.sessionKey,
+            getActiveSessionEntry: params.getActiveSessionEntry,
+          });
           // Notify that model selection is complete (including after fallback).
           // This allows responsePrefix template interpolation with the actual model.
           params.opts?.onModelSelected?.({

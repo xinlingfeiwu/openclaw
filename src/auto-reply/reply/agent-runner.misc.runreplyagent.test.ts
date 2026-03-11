@@ -82,6 +82,13 @@ type RunWithModelFallbackParams = {
   provider: string;
   model: string;
   run: (provider: string, model: string) => Promise<unknown>;
+  onError?: (params: {
+    provider: string;
+    model: string;
+    error: unknown;
+    attempt: number;
+    total: number;
+  }) => Promise<void> | void;
 };
 
 beforeEach(() => {
@@ -453,6 +460,118 @@ describe("runReplyAgent auto-compaction token update", () => {
     expect(stored[sessionKey].totalTokens).toBe(10_000);
     // compactionCount should be incremented
     expect(stored[sessionKey].compactionCount).toBe(1);
+  });
+
+  it("restores transcript and session store between fallback attempts", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-fallback-restore-"));
+    const storePath = path.join(tmp, "sessions.json");
+    const sessionFile = path.join(tmp, "session.jsonl");
+    const sessionKey = "main";
+    const sessionEntry = {
+      sessionId: "session",
+      updatedAt: Date.now(),
+      totalTokens: 10,
+    };
+    const sessionStore: Record<string, SessionEntry> = {
+      [sessionKey]: structuredClone(sessionEntry) as SessionEntry,
+    };
+
+    await fs.writeFile(sessionFile, "base\n", "utf-8");
+    await seedSessionStore({ storePath, sessionKey, entry: sessionEntry });
+
+    const { typing, sessionCtx, resolvedQueue, followupRun } = createBaseRun({
+      storePath,
+      sessionEntry,
+      sessionFile,
+      workspaceDir: tmp,
+    });
+
+    let attempt = 0;
+    runEmbeddedPiAgentMock.mockImplementation(async () => {
+      attempt += 1;
+      if (attempt === 1) {
+        await fs.writeFile(sessionFile, "base\nbad-attempt\n", "utf-8");
+        sessionStore[sessionKey] = {
+          ...(sessionStore[sessionKey] ?? ({} as SessionEntry)),
+          sessionId: "session",
+          updatedAt: Date.now(),
+          totalTokens: 999,
+          thinkingLevel: "high",
+        };
+        await saveSessionStore(storePath, sessionStore);
+        return { payloads: [{ text: "bad" }], meta: {} };
+      }
+
+      const restored = await fs.readFile(sessionFile, "utf-8");
+      await fs.writeFile(sessionFile, `${restored}good-attempt\n`, "utf-8");
+      sessionStore[sessionKey] = {
+        ...(sessionStore[sessionKey] ?? ({} as SessionEntry)),
+        sessionId: "session",
+        updatedAt: Date.now(),
+        totalTokens: 321,
+      };
+      await saveSessionStore(storePath, sessionStore);
+      return { payloads: [{ text: "ok" }], meta: {} };
+    });
+
+    runWithModelFallbackMock.mockImplementationOnce(
+      async ({ provider, model, run, onError }: RunWithModelFallbackParams) => {
+        await run(provider, model);
+        await onError?.({
+          provider,
+          model,
+          error: new Error("model_not_supported"),
+          attempt: 1,
+          total: 2,
+        });
+        const result = await run("openai", "gpt-5.4");
+        return {
+          result,
+          provider: "openai",
+          model: "gpt-5.4",
+          attempts: [
+            {
+              provider,
+              model,
+              error: "model_not_supported",
+              reason: "model_not_found",
+            },
+          ],
+        };
+      },
+    );
+
+    const result = await runReplyAgent({
+      commandBody: "hello",
+      followupRun,
+      queueKey: "main",
+      resolvedQueue,
+      shouldSteer: false,
+      shouldFollowup: false,
+      isActive: false,
+      isStreaming: false,
+      typing,
+      sessionCtx,
+      sessionEntry,
+      sessionStore,
+      sessionKey,
+      storePath,
+      defaultModel: "anthropic/claude-opus-4-5",
+      agentCfgContextTokens: 200_000,
+      resolvedVerboseLevel: "off",
+      isNewSession: false,
+      blockStreamingEnabled: false,
+      resolvedBlockStreamingBreak: "message_end",
+      shouldInjectGroupIntro: false,
+      typingMode: "instant",
+    });
+
+    expect(result).toMatchObject({ text: "ok" });
+    expect(await fs.readFile(sessionFile, "utf-8")).toBe("base\ngood-attempt\n");
+
+    const stored = loadSessionStore(storePath);
+    expect(stored[sessionKey]?.totalTokens).toBe(321);
+    expect(stored[sessionKey]?.thinkingLevel).toBeUndefined();
   });
 
   it("updates totalTokens from lastCallUsage even without compaction", async () => {

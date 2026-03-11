@@ -1,3 +1,4 @@
+import { buildCopilotIdeHeaders } from "../providers/github-copilot-headers.js";
 import { buildUsageHttpErrorSnapshot, fetchJson } from "./provider-usage.fetch.shared.js";
 import { clampPercent, PROVIDER_LABELS } from "./provider-usage.shared.js";
 import type { ProviderUsageSnapshot, UsageWindow } from "./provider-usage.types.js";
@@ -20,9 +21,7 @@ export async function fetchCopilotUsage(
     {
       headers: {
         Authorization: `token ${token}`,
-        "Editor-Version": "vscode/1.96.2",
-        "User-Agent": "GitHubCopilotChat/0.26.7",
-        "X-Github-Api-Version": "2025-04-01",
+        ...buildCopilotIdeHeaders(),
       },
     },
     timeoutMs,

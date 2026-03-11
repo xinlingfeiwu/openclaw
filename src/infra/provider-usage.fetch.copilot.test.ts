@@ -15,6 +15,8 @@ describe("fetchCopilotUsage", () => {
     const mockFetch = createProviderUsageFetch(async (_url, init) => {
       const headers = (init?.headers as Record<string, string> | undefined) ?? {};
       expect(headers.Authorization).toBe("token token");
+      expect(headers["Editor-Version"]).toBe("vscode/1.96.2");
+      expect(headers["User-Agent"]).toBe("GitHubCopilotChat/0.26.7");
       expect(headers["X-Github-Api-Version"]).toBe("2025-04-01");
 
       return makeResponse(200, {

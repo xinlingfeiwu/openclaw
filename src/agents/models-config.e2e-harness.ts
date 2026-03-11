@@ -72,6 +72,38 @@ export function mockCopilotTokenExchangeSuccess(): MockFn {
   return fetchMock;
 }
 
+export function mockCopilotTokenExchangeAndModels(modelIds: string[]): MockFn {
+  const fetchMock = vi.fn(async (input: string | URL) => {
+    const url = String(input);
+    if (url.includes("/copilot_internal/v2/token")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          token: "copilot-token;proxy-ep=proxy.copilot.example",
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+        }),
+      };
+    }
+    if (url.endsWith("/models")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: modelIds.map((id) => ({
+            id,
+            model_picker_enabled: true,
+            policy: { state: "enabled" },
+          })),
+        }),
+      };
+    }
+    throw new Error(`Unexpected fetch in test: ${url}`);
+  });
+  globalThis.fetch = fetchMock as unknown as typeof fetch;
+  return fetchMock;
+}
+
 export async function withCopilotGithubToken<T>(
   token: string,
   fn: (fetchMock: MockFn) => Promise<T>,

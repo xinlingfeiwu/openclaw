@@ -1,6 +1,11 @@
 import type { OpenClawConfig } from "../config/config.js";
 import { coerceSecretRef, resolveSecretInputRef } from "../config/types.secrets.js";
 import {
+  buildCopilotModelDefinition,
+  discoverCopilotModelIds,
+  getDefaultCopilotModelIds,
+} from "../providers/github-copilot-models.js";
+import {
   DEFAULT_COPILOT_API_BASE_URL,
   resolveCopilotApiToken,
 } from "../providers/github-copilot-token.js";
@@ -768,6 +773,7 @@ export async function resolveImplicitCopilotProvider(params: {
   }
 
   let baseUrl = DEFAULT_COPILOT_API_BASE_URL;
+  let modelIds = getDefaultCopilotModelIds();
   if (selectedGithubToken) {
     try {
       const token = await resolveCopilotApiToken({
@@ -775,6 +781,13 @@ export async function resolveImplicitCopilotProvider(params: {
         env,
       });
       baseUrl = token.baseUrl;
+      const discoveredModelIds = await discoverCopilotModelIds({
+        token: token.token,
+        baseUrl: token.baseUrl,
+      });
+      if (discoveredModelIds.length > 0) {
+        modelIds = discoveredModelIds;
+      }
     } catch {
       baseUrl = DEFAULT_COPILOT_API_BASE_URL;
     }
@@ -783,12 +796,13 @@ export async function resolveImplicitCopilotProvider(params: {
   // We deliberately do not write pi-coding-agent auth.json here.
   // OpenClaw keeps auth in auth-profiles and resolves runtime availability from that store.
 
-  // We intentionally do NOT define custom models for Copilot in models.json.
-  // pi-coding-agent treats providers with models as replacements requiring apiKey.
-  // We only override baseUrl; the model list comes from pi-ai built-ins.
+  // GitHub Copilot Claude/Gemini must use OpenClaw's explicit model definitions so
+  // pi-ai routes them through the chat completions path instead of Anthropic SDK.
+  // Prefer live `/models` discovery so we only advertise models this auth profile can
+  // actually see, while still keeping a static fallback if discovery is unavailable.
   return {
     baseUrl,
-    models: [],
+    models: modelIds.map((modelId) => buildCopilotModelDefinition(modelId)),
   } satisfies ProviderConfig;
 }
 

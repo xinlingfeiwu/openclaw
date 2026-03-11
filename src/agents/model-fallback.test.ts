@@ -5,6 +5,7 @@ import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import { resetLogger, setLoggerOverride } from "../logging/logger.js";
+import { stripAnsi } from "../terminal/ansi.js";
 import type { AuthProfileStore } from "./auth-profiles.js";
 import { saveAuthProfileStore } from "./auth-profiles.js";
 import { AUTH_STORE_VERSION } from "./auth-profiles/constants.js";
@@ -490,6 +491,31 @@ describe("runWithModelFallback", () => {
     expect(run.mock.calls[1]?.[1]).toBe("claude-haiku-3-5");
   });
 
+  it("falls back on model_not_supported errors", async () => {
+    const cfg = makeCfg();
+    const run = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error(
+          '400 {"error":{"message":"The requested model is not supported.","code":"model_not_supported"}}',
+        ),
+      )
+      .mockResolvedValueOnce("ok");
+
+    const result = await runWithModelFallback({
+      cfg,
+      provider: "github-copilot",
+      model: "claude-sonnet-4.6",
+      run,
+    });
+
+    expect(result.result).toBe("ok");
+    expect(result.attempts).toHaveLength(1);
+    expect(result.attempts[0]?.reason).toBe("model_not_found");
+    expect(run.mock.calls[1]?.[0]).toBe("openai");
+    expect(run.mock.calls[1]?.[1]).toBe("gpt-4.1-mini");
+  });
+
   it("warns when falling back due to model_not_found", async () => {
     setLoggerOverride({ level: "silent", consoleLevel: "warn" });
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -536,7 +562,7 @@ describe("runWithModelFallback", () => {
       });
 
       expect(result.result).toBe("ok");
-      const warning = warnSpy.mock.calls[0]?.[0] as string;
+      const warning = stripAnsi((warnSpy.mock.calls[0]?.[0] as string | undefined) ?? "");
       expect(warning).toContain('Model "openai/gpt-6spoof" not found');
       expect(warning).not.toContain("\u001B");
       expect(warning).not.toContain("\n");

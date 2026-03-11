@@ -881,6 +881,8 @@ export function isModelNotFoundErrorMessage(raw: string): boolean {
     lower.includes("model not found") ||
     lower.includes("model_not_found") ||
     lower.includes("not_found_error") ||
+    lower.includes("model_not_supported") ||
+    lower.includes("requested model is not supported") ||
     (lower.includes("does not exist") && lower.includes("model")) ||
     (lower.includes("invalid model") && !lower.includes("invalid model reference"))
   ) {
@@ -894,6 +896,14 @@ export function isModelNotFoundErrorMessage(raw: string): boolean {
 
   // JSON error payloads: {"status": "NOT_FOUND"} or {"code": 404} combined with not-found text.
   if (/\b404\b/.test(raw) && /not[-_ ]?found/i.test(raw)) {
+    return true;
+  }
+
+  // GitHub Copilot and similar OpenAI-compatible gateways can report unsupported
+  // models as HTTP 400 invalid_request_error responses instead of a 404-style
+  // model-not-found payload. Treat those as model selection failures so the
+  // normal fallback chain can move to the next configured model.
+  if (/model.{0,80}\b(not supported|unsupported)\b/i.test(raw)) {
     return true;
   }
 

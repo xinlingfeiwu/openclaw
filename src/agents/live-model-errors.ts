@@ -9,7 +9,16 @@ export function isModelNotFoundErrorMessage(raw: string): boolean {
   if (/not_found_error/i.test(msg)) {
     return true;
   }
+  if (/model_not_supported/i.test(msg)) {
+    return true;
+  }
+  if (/requested model is not supported/i.test(msg)) {
+    return true;
+  }
   if (/model:\s*[a-z0-9._-]+/i.test(msg) && /not(?:[_\-\s])?found/i.test(msg)) {
+    return true;
+  }
+  if (/model.{0,80}\b(not supported|unsupported)\b/i.test(msg)) {
     return true;
   }
   return false;

@@ -767,9 +767,15 @@ export async function runEmbeddedPiAgent(
       const resolveAuthProfileFailureReason = (
         failoverReason: FailoverReason | null,
       ): AuthProfileFailureReason | null => {
-        // Timeouts are transport/model-path failures, not auth health signals,
-        // so they should not persist auth-profile failure state.
-        if (!failoverReason || failoverReason === "timeout") {
+        // Timeouts and model-not-found errors are transport/model-path failures,
+        // not auth health signals. Persisting them at the profile level poisons
+        // other models on the same provider (for example unsupported Copilot
+        // Claude should still allow a fallback to Copilot GPT).
+        if (
+          !failoverReason ||
+          failoverReason === "timeout" ||
+          failoverReason === "model_not_found"
+        ) {
           return null;
         }
         return failoverReason;

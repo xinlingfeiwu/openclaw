@@ -465,6 +465,12 @@ importers:
 
   extensions/media-understanding-core: {}
 
+  extensions/mcp-bridge:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.27.1
+        version: 1.27.1(zod@4.3.6)
+
   extensions/memory-core:
     devDependencies:
       openclaw:

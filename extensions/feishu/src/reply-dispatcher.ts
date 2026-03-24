@@ -224,13 +224,16 @@ export function createFeishuReplyDispatcher(params: CreateFeishuReplyDispatcherP
     return parts.join("");
   };
 
-  const flushStreamingCardUpdate = (combined: string) => {
+  // Read streamText/reasoningText at execution time (not at enqueue time) so that
+  // later closures in the queue see the latest accumulated value and are deduplicated
+  // by streaming.update() instead of each firing a separate Cardkit API call.
+  const flushStreamingCardUpdate = () => {
     partialUpdateQueue = partialUpdateQueue.then(async () => {
       if (streamingStartPromise) {
         await streamingStartPromise;
       }
       if (streaming?.isActive()) {
-        await streaming.update(combined);
+        await streaming.update(buildCombinedStreamText(reasoningText, streamText));
       }
     });
   };
@@ -254,7 +257,7 @@ export function createFeishuReplyDispatcher(params: CreateFeishuReplyDispatcherP
     const mode = options?.mode ?? "snapshot";
     streamText =
       mode === "delta" ? `${streamText}${nextText}` : mergeStreamingText(streamText, nextText);
-    flushStreamingCardUpdate(buildCombinedStreamText(reasoningText, streamText));
+    flushStreamingCardUpdate();
   };
 
   const queueReasoningUpdate = (nextThinking: string) => {
@@ -262,7 +265,7 @@ export function createFeishuReplyDispatcher(params: CreateFeishuReplyDispatcherP
       return;
     }
     reasoningText = nextThinking;
-    flushStreamingCardUpdate(buildCombinedStreamText(reasoningText, streamText));
+    flushStreamingCardUpdate();
   };
 
   const startStreaming = () => {

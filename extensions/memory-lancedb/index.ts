@@ -535,7 +535,7 @@ export default definePluginEntry({
 
     // Auto-recall: inject relevant memories before agent starts
     if (cfg.autoRecall) {
-      api.on("before_agent_start", async (event) => {
+      api.on("before_prompt_build", async (event) => {
         if (!event.prompt || event.prompt.length < 5) {
           return;
         }

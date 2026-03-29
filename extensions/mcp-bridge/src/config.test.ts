@@ -12,11 +12,13 @@ describe("resolveMcpBridgeConfig", () => {
         },
       },
       legacyMcpServers: {
-        filesystem: {
-          command: "npx",
-          args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
-          env: { DEMO: "1" },
-          description: "Filesystem bridge",
+        servers: {
+          filesystem: {
+            command: "npx",
+            args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+            env: { DEMO: "1" },
+            description: "Filesystem bridge",
+          },
         },
       },
     });
@@ -79,10 +81,12 @@ describe("resolveMcpBridgeConfig", () => {
         },
       },
       legacyMcpServers: {
-        github: {
-          command: "npx",
-          args: ["-y", "@modelcontextprotocol/server-github"],
-          description: "Legacy github",
+        servers: {
+          github: {
+            command: "npx",
+            args: ["-y", "@modelcontextprotocol/server-github"],
+            description: "Legacy github",
+          },
         },
       },
     });

@@ -1,4 +1,4 @@
-import type { OpenClawPluginService, OpenClawPluginServiceContext } from "openclaw/plugin-sdk";
+import type { OpenClawPluginService, OpenClawPluginServiceContext } from "openclaw/plugin-sdk/plugin-entry";
 import { connectMcpServer } from "./client.js";
 import { resolveMcpBridgeConfig } from "./config.js";
 import { createMcpTools } from "./tools.js";

@@ -401,6 +401,13 @@ export async function runCronIsolatedAgentTurn(params: {
   // must not prevent the actual agent run from executing.
   cronSession.sessionEntry.modelProvider = provider;
   cronSession.sessionEntry.model = model;
+  // Anchor the session's providerOverride/modelOverride to the cron-resolved
+  // model so that resolveLiveSessionModelSelection returns the same model as
+  // the current selection. Without this, the Pi embedded runner compares the
+  // payload model against the agent's config default and throws
+  // LiveSessionModelSwitchError when they differ, causing the cron job to fail.
+  cronSession.sessionEntry.providerOverride = provider;
+  cronSession.sessionEntry.modelOverride = model;
   cronSession.sessionEntry.systemSent = true;
   try {
     await persistSessionEntry();

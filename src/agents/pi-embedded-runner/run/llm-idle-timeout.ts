@@ -137,7 +137,24 @@ export function streamWithIdleTimeout(
     };
 
     if (maybeStream && typeof maybeStream === "object" && "then" in maybeStream) {
-      return Promise.resolve(maybeStream).then(wrapStream);
+      // Guard the connection phase too: if the stream Promise never resolves (e.g. hung
+      // HTTP connection), the idle timer inside wrapStream never starts. Race the
+      // connect phase against the same timeout so the runner abort path fires correctly.
+      const streamPromise = Promise.resolve(maybeStream);
+      const connectTimeoutPromise = new Promise<never>((_, reject) => {
+        const timer = setTimeout(() => {
+          const error = new Error(
+            `LLM connect timeout (${Math.floor(timeoutMs / 1000)}s): no response from model`,
+          );
+          onIdleTimeout?.(error);
+          reject(error);
+        }, timeoutMs);
+        void streamPromise.then(
+          () => clearTimeout(timer),
+          () => clearTimeout(timer),
+        );
+      });
+      return Promise.race([streamPromise, connectTimeoutPromise]).then(wrapStream);
     }
     return wrapStream(maybeStream);
   };

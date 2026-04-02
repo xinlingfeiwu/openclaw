@@ -1162,7 +1162,9 @@ export function isModelNotFoundErrorMessage(raw: string): boolean {
     lower.includes("model_not_found") ||
     lower.includes("not_found_error") ||
     (lower.includes("does not exist") && lower.includes("model")) ||
-    (lower.includes("invalid model") && !lower.includes("invalid model reference"))
+    (lower.includes("invalid model") && !lower.includes("invalid model reference")) ||
+    // GitHub Copilot HTTP 400: "The requested model is not supported."
+    (lower.includes("model") && lower.includes("not supported"))
   ) {
     return true;
   }

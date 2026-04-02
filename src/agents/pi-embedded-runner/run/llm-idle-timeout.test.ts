@@ -267,4 +267,43 @@ describe("streamWithIdleTimeout", () => {
     expect(timeoutError).toBeInstanceOf(Error);
     expect((timeoutError as Error).message).toMatch(/LLM idle timeout/);
   });
+
+  it("times out when baseFn returns a Promise that never resolves (hung connection)", async () => {
+    // Simulate a hung HTTP connection: baseFn returns a Promise that never resolves
+    const neverResolvingPromise = new Promise<AsyncIterable<unknown>>(() => {});
+    const baseFn = vi.fn().mockReturnValue(neverResolvingPromise);
+    const onIdleTimeout = vi.fn();
+    const wrapped = streamWithIdleTimeout(baseFn, 50, onIdleTimeout); // 50ms timeout
+
+    const model = {} as Parameters<typeof baseFn>[0];
+    const context = {} as Parameters<typeof baseFn>[1];
+    const options = {} as Parameters<typeof baseFn>[2];
+
+    await expect(wrapped(model, context, options)).rejects.toThrow(/LLM connect timeout/);
+    expect(onIdleTimeout).toHaveBeenCalledTimes(1);
+    const [timeoutError] = onIdleTimeout.mock.calls[0] ?? [];
+    expect((timeoutError as Error).message).toMatch(/LLM connect timeout/);
+  });
+
+  it("does not time out when baseFn returns a Promise that resolves quickly", async () => {
+    const mockStream = createMockAsyncIterable(["a", "b", "c"]);
+    // Simulate fast connection: Promise resolves after 10ms
+    const fastPromise = new Promise<AsyncIterable<unknown>>((resolve) =>
+      setTimeout(() => resolve(mockStream), 10),
+    );
+    const baseFn = vi.fn().mockReturnValue(fastPromise);
+    const onIdleTimeout = vi.fn();
+    const wrapped = streamWithIdleTimeout(baseFn, 200, onIdleTimeout); // 200ms timeout
+
+    const model = {} as Parameters<typeof baseFn>[0];
+    const context = {} as Parameters<typeof baseFn>[1];
+    const options = {} as Parameters<typeof baseFn>[2];
+
+    const stream = (await (wrapped(model, context, options) as Promise<AsyncIterable<string>>))[
+      Symbol.asyncIterator
+    ]();
+    const r1 = await stream.next();
+    expect(r1.value).toBe("a");
+    expect(onIdleTimeout).not.toHaveBeenCalled();
+  });
 });

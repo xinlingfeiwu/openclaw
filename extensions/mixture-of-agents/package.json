@@ -1,0 +1,15 @@
+{
+  "name": "@openclaw/mixture-of-agents",
+  "version": "2026.4.17",
+  "private": true,
+  "description": "Multi-provider reasoning: sends a prompt to multiple models in parallel and synthesizes their responses",
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.49"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

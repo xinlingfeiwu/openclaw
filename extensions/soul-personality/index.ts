@@ -3,7 +3,12 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
-// Patterns that suggest prompt injection attempts
+// Invisible Unicode characters used in prompt injection — matches hermes _CONTEXT_INVISIBLE_CHARS
+// Uses alternation to avoid lint rule for combining chars in character class
+const INVISIBLE_UNICODE_REGEX =
+  /\u200B|\u200C|\u200D|\u2060|\uFEFF|\u202A|\u202B|\u202C|\u202D|\u202E/;
+
+// Patterns that suggest prompt injection attempts in user input or context files
 const INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?(previous|prior|above)\s+instructions?/i,
   /disregard\s+(all\s+)?(previous|prior|above)\s+instructions?/i,
@@ -16,6 +21,13 @@ const INJECTION_PATTERNS = [
   /override\s+(your\s+)?(instructions?|behavior|personality)/i,
   /jailbreak/i,
   /DAN\s*(mode)?:/i,
+  // HTML/XML injection patterns
+  /<!--.*?(execute|inject|run|eval).*?-->/is,
+  /<div[^>]+style\s*=\s*["']display\s*:\s*none/i,
+  /translate\s*=\s*["']no["'].*execute/i,
+  // Exfiltration patterns
+  /send\s+(all\s+)?(memory|context|secrets?)\s+to/i,
+  /exfil(trate)?/i,
 ];
 
 type SoulConfig = {
@@ -39,9 +51,13 @@ function expandHome(p: string): string {
   return p;
 }
 
-function detectInjection(prompt: string): string | null {
+function detectInjection(text: string): string | null {
+  // Check invisible Unicode first (zero-width joiners, BOM, RTL overrides)
+  if (INVISIBLE_UNICODE_REGEX.test(text)) {
+    return "invisible-unicode";
+  }
   for (const pat of INJECTION_PATTERNS) {
-    if (pat.test(prompt)) {
+    if (pat.test(text)) {
       return pat.source;
     }
   }
@@ -75,7 +91,20 @@ export default definePluginEntry({
       // Load SOUL file on each build (allows live edits without gateway restart)
       const soul = loadSoulFile(soulPath);
       if (soul) {
-        result.prependSystemContext = `${soul}\n`;
+        // Scan SOUL.md content for injection before trusting it
+        if (enableInjectionScan) {
+          const soulInjection = detectInjection(soul);
+          if (soulInjection) {
+            api.logger.warn?.(
+              `soul-personality: potential injection in SOUL.md (pattern: ${soulInjection}) — file blocked`,
+            );
+            // Don't inject compromised SOUL content
+          } else {
+            result.prependSystemContext = `${soul}\n`;
+          }
+        } else {
+          result.prependSystemContext = `${soul}\n`;
+        }
       }
 
       // Injection scan on incoming user prompt

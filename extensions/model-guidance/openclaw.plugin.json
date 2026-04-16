@@ -1,0 +1,9 @@
+{
+  "id": "model-guidance",
+  "name": "Model Guidance",
+  "description": "Injects model-specific execution guidance (GPT/Gemini) and memory/skill guidance into the agent system prompt.",
+  "version": "2026.4.17",
+  "install": {
+    "npmSpec": "@openclaw/model-guidance"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/model-guidance",
+  "version": "2026.4.17",
+  "private": true,
+  "description": "Injects model-specific execution guidance to reduce narration and improve tool use discipline",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

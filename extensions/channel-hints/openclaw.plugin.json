@@ -1,0 +1,26 @@
+{
+  "id": "channel-hints",
+  "name": "Channel Hints",
+  "description": "Injects channel-specific format and capability hints into the agent system prompt based on the active messaging channel (WhatsApp, Telegram, Discord, Slack, Signal, WeChat, etc.).",
+  "version": "2026.4.17",
+  "install": {
+    "npmSpec": "@openclaw/channel-hints"
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "description": "Enable channel-specific format hints injection (default: true)"
+      },
+      "customHints": {
+        "type": "object",
+        "description": "Custom channel hints to add or override built-in hints. Keys are channelId strings, values are hint text strings.",
+        "additionalProperties": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

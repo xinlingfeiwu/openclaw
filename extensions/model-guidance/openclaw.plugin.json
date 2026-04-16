@@ -28,6 +28,10 @@
       "injectToolUseEnforcement": {
         "type": "boolean",
         "description": "Inject TOOL_USE_ENFORCEMENT_GUIDANCE (default: true)"
+      },
+      "injectSessionSearchGuidance": {
+        "type": "boolean",
+        "description": "Inject SESSION_SEARCH_GUIDANCE — guide model to use session_search before asking user to repeat (default: true)"
       }
     }
   }

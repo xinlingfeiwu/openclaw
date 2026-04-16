@@ -50,6 +50,13 @@ const DEFAULT_DANGEROUS_PATTERNS = [
   // Network exfiltration patterns
   /\bnc\s+-[el]\b/i, // netcat listen/exec
   /\b(ngrok|pagekite|localtunnel)\b/i,
+  // SSRF — cloud metadata endpoints
+  /169\.254\.169\.254/,
+  /metadata\.google\.internal/i,
+  /metadata\.goog\b/i,
+  // Credential exfiltration via curl/wget with env var secrets
+  /\bcurl\b[^;]*\$\{?\w*(?:KEY|TOKEN|SECRET|PASS)/i,
+  /\bwget\b[^;]*\$\{?\w*(?:KEY|TOKEN|SECRET|PASS)/i,
 ];
 
 const DEFAULT_SENSITIVE_TOOLS = new Set([

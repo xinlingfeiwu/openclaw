@@ -99,9 +99,15 @@ When using a skill and finding it outdated, incomplete, or wrong, \
 patch it immediately with skill_manage(action='patch') — don't wait to be asked. \
 Skills that aren't maintained become liabilities.`;
 
-// Model name substrings that trigger GPT execution guidance
-const GPT_MODEL_PATTERNS = ["gpt", "codex", "copilot", "o1", "o3", "o4"];
-const _GEMINI_MODEL_PATTERNS = ["gemini", "gemma"];
+const SESSION_SEARCH_GUIDANCE = `# Session search guidance
+When the user references something from a past conversation or you suspect \
+relevant cross-session context exists, use session_search to recall it before \
+asking them to repeat themselves.`;
+
+// Model name substrings that trigger GPT execution guidance.
+// Aligned with hermes TOOL_USE_ENFORCEMENT_MODELS.
+const GPT_MODEL_PATTERNS = ["gpt", "codex", "copilot", "o1", "o3", "o4", "grok", "deepseek"];
+const GEMINI_MODEL_PATTERNS = ["gemini", "gemma"];
 
 type ModelGuidanceConfig = {
   enabled?: boolean;
@@ -113,6 +119,8 @@ type ModelGuidanceConfig = {
   injectSkillsGuidance?: boolean;
   /** Inject tool-use enforcement guidance. Default: true */
   injectToolUseEnforcement?: boolean;
+  /** Inject SESSION_SEARCH_GUIDANCE. Default: true */
+  injectSessionSearchGuidance?: boolean;
 };
 
 export default definePluginEntry({
@@ -131,6 +139,7 @@ export default definePluginEntry({
     const injectMemory = cfg.injectMemoryGuidance !== false;
     const injectSkills = cfg.injectSkillsGuidance !== false;
     const injectToolUse = cfg.injectToolUseEnforcement !== false;
+    const injectSessionSearch = cfg.injectSessionSearchGuidance !== false;
 
     api.on("before_prompt_build", (_event, _ctx) => {
       const parts: string[] = [];
@@ -139,17 +148,17 @@ export default definePluginEntry({
         parts.push(TOOL_USE_ENFORCEMENT_GUIDANCE);
       }
 
-      // Model-specific execution discipline
-      if (
-        family === "auto"
-          ? GPT_MODEL_PATTERNS.some((p) => family.includes(p))
-          : family === "gpt" || family === "copilot"
-      ) {
+      // Model-specific execution discipline.
+      // "auto" mode falls through to GPT guidance (safe default for gpt-5.4 users).
+      const isGpt = family === "auto" || GPT_MODEL_PATTERNS.some((p) => family.includes(p));
+      const isGemini = !isGpt && GEMINI_MODEL_PATTERNS.some((p) => family.includes(p));
+
+      if (isGpt) {
         parts.push(OPENAI_MODEL_EXECUTION_GUIDANCE);
-      } else if (family === "gemini") {
+      } else if (isGemini) {
         parts.push(GOOGLE_MODEL_OPERATIONAL_GUIDANCE);
-      } else if (family === "gpt") {
-        // default: inject GPT guidance (most users here are on gpt-5.4)
+      } else {
+        // Unknown family — inject GPT guidance as conservative default
         parts.push(OPENAI_MODEL_EXECUTION_GUIDANCE);
       }
 
@@ -159,6 +168,10 @@ export default definePluginEntry({
 
       if (injectSkills) {
         parts.push(SKILLS_GUIDANCE);
+      }
+
+      if (injectSessionSearch) {
+        parts.push(SESSION_SEARCH_GUIDANCE);
       }
 
       if (parts.length === 0) {

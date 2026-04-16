@@ -1,0 +1,20 @@
+{
+  "id": "cron-silent-filter",
+  "name": "Cron Silent Filter",
+  "version": "0.1.0",
+  "description": "Suppresses outbound delivery when the agent replies with exactly \"[SILENT]\" (the cron no-op marker from channel-hints). Prevents ghost messages during scheduled cron jobs.",
+  "openclaw.install.npmSpec": "cron-silent-filter",
+  "configSchema": {
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable or disable cron silent filter."
+    },
+    "extraMarkers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Additional exact marker strings to suppress delivery for."
+    }
+  }
+}

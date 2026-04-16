@@ -1009,6 +1009,14 @@
       "types": "./dist/plugin-sdk/skill-security-scan.d.ts",
       "default": "./dist/plugin-sdk/skill-security-scan.js"
     },
+    "./plugin-sdk/checkpoint-rollback": {
+      "types": "./dist/plugin-sdk/checkpoint-rollback.d.ts",
+      "default": "./dist/plugin-sdk/checkpoint-rollback.js"
+    },
+    "./plugin-sdk/process-monitor": {
+      "types": "./dist/plugin-sdk/process-monitor.d.ts",
+      "default": "./dist/plugin-sdk/process-monitor.js"
+    },
     "./plugin-sdk/native-command-registry": {
       "types": "./dist/plugin-sdk/native-command-registry.d.ts",
       "default": "./dist/plugin-sdk/native-command-registry.js"

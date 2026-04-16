@@ -238,6 +238,8 @@
   "insights-tracker",
   "smart-approvals",
   "skill-security-scan",
+  "checkpoint-rollback",
+  "process-monitor",
   "native-command-registry",
   "nextcloud-talk",
   "nostr",

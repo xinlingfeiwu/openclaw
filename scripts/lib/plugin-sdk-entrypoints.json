@@ -232,6 +232,7 @@
   "skill-commands-runtime",
   "native-command-config-runtime",
   "skill-auto-create",
+  "smart-router",
   "native-command-registry",
   "nextcloud-talk",
   "nostr",

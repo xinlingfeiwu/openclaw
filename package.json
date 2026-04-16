@@ -985,6 +985,10 @@
       "types": "./dist/plugin-sdk/skill-auto-create.d.ts",
       "default": "./dist/plugin-sdk/skill-auto-create.js"
     },
+    "./plugin-sdk/smart-router": {
+      "types": "./dist/plugin-sdk/smart-router.d.ts",
+      "default": "./dist/plugin-sdk/smart-router.js"
+    },
     "./plugin-sdk/native-command-registry": {
       "types": "./dist/plugin-sdk/native-command-registry.d.ts",
       "default": "./dist/plugin-sdk/native-command-registry.js"

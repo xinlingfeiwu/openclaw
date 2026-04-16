@@ -1,0 +1,62 @@
+{
+  "id": "smart-router",
+  "name": "Smart Model Router",
+  "description": "Routes simple/cheap queries to a fast model and complex queries to the primary model, reducing cost and latency.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "fastModel": {
+        "type": "string",
+        "description": "Model to use for simple queries (e.g. 'gpt-5.4-mini')"
+      },
+      "fastProvider": {
+        "type": "string",
+        "description": "Provider for the fast model (e.g. 'github-copilot')"
+      },
+      "simplePatterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Regex patterns that identify simple queries"
+      },
+      "complexPatterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Regex patterns that force the primary model"
+      },
+      "maxPromptLengthForFast": {
+        "type": "number",
+        "description": "Prompts longer than this (chars) always use primary model (default: 800)"
+      }
+    }
+  },
+  "uiHints": {
+    "enabled": {
+      "label": "Enabled",
+      "help": "Enable smart model routing"
+    },
+    "fastModel": {
+      "label": "Fast Model",
+      "help": "Model ID for simple/cheap queries (e.g. gpt-5.4-mini)"
+    },
+    "fastProvider": {
+      "label": "Fast Provider",
+      "help": "Provider for the fast model"
+    },
+    "simplePatterns": {
+      "label": "Simple Query Patterns",
+      "help": "Regex patterns (case-insensitive) that identify simple queries routed to the fast model"
+    },
+    "complexPatterns": {
+      "label": "Complex Query Patterns",
+      "help": "Regex patterns (case-insensitive) that force use of the primary model"
+    },
+    "maxPromptLengthForFast": {
+      "label": "Max Prompt Length for Fast Model",
+      "help": "Prompts longer than this char count always use the primary model (default: 800)"
+    }
+  }
+}

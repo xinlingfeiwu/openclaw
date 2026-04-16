@@ -72,7 +72,7 @@ export default definePluginEntry({
         : DEFAULT_NUDGE_TEXT;
 
     api.on("before_prompt_build", async (event, ctx) => {
-      const sessionId = ctx.conversationId ?? ctx.agentId ?? "default";
+      const sessionId = ctx.sessionId ?? ctx.agentId ?? "default";
       const state = getSessionState(sessionId);
 
       // Update user turn count from current messages

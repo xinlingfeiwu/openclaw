@@ -231,6 +231,7 @@
   "models-provider-runtime",
   "skill-commands-runtime",
   "native-command-config-runtime",
+  "skill-auto-create",
   "native-command-registry",
   "nextcloud-talk",
   "nostr",

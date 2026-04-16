@@ -1,0 +1,53 @@
+{
+  "id": "skill-auto-create",
+  "name": "Skill Auto-Create",
+  "description": "After N interesting tool calls in a session, prompts the agent to create a reusable Skill file capturing the workflow pattern.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "toolCallThreshold": {
+        "type": "number",
+        "description": "Min interesting tool calls before triggering skill creation prompt (default: 5)"
+      },
+      "maxPerSession": {
+        "type": "number",
+        "description": "Max skill-creation prompts per session (default: 1)"
+      },
+      "interestingTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Tool names considered 'interesting' for skill extraction (default: bash, computer, write_file, etc.)"
+      },
+      "skillsDir": {
+        "type": "string",
+        "description": "Directory where skills are saved (default: ~/.openclaw/skills/auto-created)"
+      }
+    }
+  },
+  "uiHints": {
+    "enabled": {
+      "label": "Enabled",
+      "help": "Enable automatic skill creation prompts after complex sessions"
+    },
+    "toolCallThreshold": {
+      "label": "Tool Call Threshold",
+      "help": "Minimum interesting tool calls before prompting skill creation (default: 5)"
+    },
+    "maxPerSession": {
+      "label": "Max Per Session",
+      "help": "Maximum skill creation prompts per session (default: 1)"
+    },
+    "interestingTools": {
+      "label": "Interesting Tools",
+      "help": "Tool names to count toward the threshold (default: bash, computer, write_file, create_file, edit_file, run_terminal_cmd)"
+    },
+    "skillsDir": {
+      "label": "Skills Directory",
+      "help": "Where to save auto-created skill files (default: ~/.openclaw/skills/auto-created)"
+    }
+  }
+}

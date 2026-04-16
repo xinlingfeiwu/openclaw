@@ -981,6 +981,10 @@
       "types": "./dist/plugin-sdk/native-command-config-runtime.d.ts",
       "default": "./dist/plugin-sdk/native-command-config-runtime.js"
     },
+    "./plugin-sdk/skill-auto-create": {
+      "types": "./dist/plugin-sdk/skill-auto-create.d.ts",
+      "default": "./dist/plugin-sdk/skill-auto-create.js"
+    },
     "./plugin-sdk/native-command-registry": {
       "types": "./dist/plugin-sdk/native-command-registry.d.ts",
       "default": "./dist/plugin-sdk/native-command-registry.js"

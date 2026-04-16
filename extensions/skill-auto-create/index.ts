@@ -14,21 +14,16 @@ const DEFAULT_INTERESTING_TOOLS = new Set([
   "edit",
 ]);
 
-// Skills dir prompt pattern shown to the agent
-const SKILL_CREATION_PROMPT = `<skill_auto_create>
-LEARNING OPPORTUNITY DETECTED: This session involved several tool operations that may represent a reusable workflow pattern.
-
-Please review this conversation and consider creating a Skill file to capture the workflow. If there is a clear, reusable pattern:
-
-1. Summarize the task pattern in 1-2 sentences
-2. Use the skill management tool (or write a markdown file to ~/.openclaw/skills/auto-created/) with:
-   - A descriptive filename (e.g., "deploy-docker-service.md")
-   - A clear title and description
-   - Step-by-step instructions extracted from this session
-   - Any commands, patterns, or tricks discovered
-
-Only create a skill if the workflow is genuinely reusable and not already covered by existing skills. Skip if this was a one-off task.
-</skill_auto_create>`;
+// Exact hermes _SKILL_REVIEW_PROMPT text — focused on non-trivial workflows discovered through trial and error
+const SKILL_CREATION_PROMPT = `<skill_review>
+Review the conversation above and consider saving a reusable skill. Focus on:
+- Did this session involve a non-trivial approach that required trial and error, or changing course?
+- Was there a workflow, trick, or fix that would be hard to recall or reinvent next time?
+If something stands out, save it using the skill_manage tool (or write a markdown file to ~/.openclaw/skills/).
+Include: a clear title, the approach in concise steps, any key commands or patterns, and gotchas to avoid.
+If a relevant skill already exists, update it with what was learned here.
+If nothing is worth saving, just say "Nothing to save." and stop.
+</skill_review>`;
 
 type SkillAutoCreateConfig = {
   enabled?: boolean;

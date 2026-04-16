@@ -1,24 +1,55 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
-// Patterns considered dangerous defaults requiring approval
+// Invisible Unicode characters used in prompt injection attacks.
+// Matches hermes _CONTEXT_INVISIBLE_CHARS detection logic.
+const INVISIBLE_UNICODE_REGEX =
+  /\u200B|\u200C|\u200D|\u2060|\uFEFF|\u202A|\u202B|\u202C|\u202D|\u202E/;
+
+// Patterns considered dangerous defaults requiring approval.
+// Organized by category, aligned with hermes tools/approval.py (30+ patterns).
 const DEFAULT_DANGEROUS_PATTERNS = [
-  /\brm\s+-rf?\s/i,
+  // File system destruction
+  /\brm\s+-[rRfF]{1,3}\s/i,
   /\bdrop\s+(table|database)\b/i,
   /\bformat\s+[a-z]:/i,
-  /sudo\s+/i,
-  />\s*\/dev\/(sda|nvme|disk)/i,
+  />\s*\/dev\/(sda|nvme|disk\d)/i,
   /\bdd\s+if=/i,
+  /\bshred\b/i,
+  /\btruncate\s+-s\s+0\b/i,
+  // Privilege escalation
+  /\bsudo\s+/i,
+  /\bsu\s+-\b/i,
+  /\bchmod\s+([-+]?s|777|666|[ugo]\+[ws])/i,
+  /\bchown\s+root/i,
+  /\bsetuid\b/i,
+  // System / service disruption
   /\bsystemctl\s+(stop|disable|mask)\b/i,
+  /\bservice\s+\w+\s+(stop|disable)\b/i,
   /\bkillall\b/i,
-  /\bchmod\s+-R\s+777/i,
+  /\bkill\s+-9\s+-1\b/i, // kill ALL processes
+  // Fork bomb / infinite loops
+  /:\(\)\s*\{.*?:\|:&\s*\};:/s, // bash fork bomb
+  // Remote code execution via pipe-to-shell
+  /\bcurl\b.*\|\s*(ba)?sh\b/i,
+  /\bwget\b.*\|\s*(ba)?sh\b/i,
+  /\bpipe_to_shell\b/i,
+  // eval / dynamic code execution
+  /\beval\b.*base64/i,
+  /\bpython\s+-c\b/i,
+  /\bperl\s+-e\b/i,
+  /\bnode\s+-e\b/i,
+  /\bsh\s+-c\b/i,
+  /\bbash\s+-c\b/i,
+  // Credential / secrets exposure
+  /\bcat\s+.*\/(\.ssh|\.gnupg|\.aws|\.config\/gcloud)\//i,
+  /\benv\b.*secret/i,
+  /\bprintenv\b/i,
+  // Network exfiltration patterns
+  /\bnc\s+-[el]\b/i, // netcat listen/exec
+  /\b(ngrok|pagekite|localtunnel)\b/i,
 ];
 
 const DEFAULT_SENSITIVE_TOOLS = new Set([
@@ -75,14 +106,9 @@ function savePatterns(patternsFile: string, data: PatternsData): void {
 }
 
 function extractCommandString(params: Record<string, unknown>): string {
-  const cmd =
-    params.command ??
-    params.cmd ??
-    params.input ??
-    params.text ??
-    params.content ??
-    "";
-  return String(cmd).trim().slice(0, 80);
+  const cmd = params.command ?? params.cmd ?? params.input ?? params.text ?? params.content ?? "";
+  const cmdStr = typeof cmd === "string" ? cmd : JSON.stringify(cmd);
+  return cmdStr.trim().slice(0, 80);
 }
 
 function normalizeCommand(cmd: string): string {
@@ -144,6 +170,22 @@ export default definePluginEntry({
         return undefined;
       }
 
+      // Invisible Unicode in command → always flag, don't silently allow
+      if (INVISIBLE_UNICODE_REGEX.test(cmdStr)) {
+        api.logger.warn?.(
+          `smart-approvals: invisible Unicode detected in command "${cmdStr.slice(0, 60)}" — possible injection`,
+        );
+        return {
+          requireApproval: {
+            title: `Invisible Unicode characters detected`,
+            description: `Command contains invisible Unicode (zero-width joiners, BOM, or RTL overrides): \`${cmdStr.slice(0, 100)}\`\n\nThis may indicate a prompt injection attack. Allow?`,
+            severity: "critical" as const,
+            timeoutMs: 30_000,
+            timeoutBehavior: "deny" as const,
+          },
+        };
+      }
+
       if (!isDangerous(cmdStr, dangerousPatterns)) {
         return undefined;
       }
@@ -186,9 +228,7 @@ export default definePluginEntry({
               };
               fresh.patterns.push(pattern);
               savePatterns(patternsFile, fresh);
-              api.logger.info?.(
-                `smart-approvals: saved approved pattern "${normalKey}"`,
-              );
+              api.logger.info?.(`smart-approvals: saved approved pattern "${normalKey}"`);
             }
           },
         },

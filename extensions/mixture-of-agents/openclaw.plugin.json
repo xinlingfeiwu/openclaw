@@ -1,0 +1,41 @@
+{
+  "id": "mixture-of-agents",
+  "name": "Mixture of Agents",
+  "description": "Registers a mixture_of_agents tool that queries multiple provider models in parallel and aggregates their answers.",
+  "version": "2026.4.17",
+  "install": {
+    "npmSpec": "@openclaw/mixture-of-agents"
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "referenceModels": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of 'provider/model' pairs for reference queries"
+      },
+      "aggregatorModel": {
+        "type": "string",
+        "description": "Model ID for aggregating reference answers"
+      },
+      "aggregatorProvider": {
+        "type": "string",
+        "description": "Provider ID for the aggregator model"
+      },
+      "referenceTimeoutMs": {
+        "type": "number",
+        "description": "Timeout ms for each reference model call (default: 60000)"
+      },
+      "aggregatorTimeoutMs": {
+        "type": "number",
+        "description": "Timeout ms for aggregator call (default: 90000)"
+      }
+    }
+  }
+}

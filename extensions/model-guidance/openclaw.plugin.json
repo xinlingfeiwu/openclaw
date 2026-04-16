@@ -5,5 +5,30 @@
   "version": "2026.4.17",
   "install": {
     "npmSpec": "@openclaw/model-guidance"
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "modelFamily": {
+        "type": "string",
+        "description": "Model family: 'gpt', 'gemini', or 'auto' (default: gpt)"
+      },
+      "injectMemoryGuidance": {
+        "type": "boolean",
+        "description": "Inject MEMORY_GUIDANCE text into system prompt (default: true)"
+      },
+      "injectSkillsGuidance": {
+        "type": "boolean",
+        "description": "Inject SKILLS_GUIDANCE text into system prompt (default: true)"
+      },
+      "injectToolUseEnforcement": {
+        "type": "boolean",
+        "description": "Inject TOOL_USE_ENFORCEMENT_GUIDANCE (default: true)"
+      }
+    }
   }
 }

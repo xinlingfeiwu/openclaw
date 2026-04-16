@@ -1,0 +1,30 @@
+{
+  "id": "todo-manager",
+  "name": "Todo Manager",
+  "description": "Registers a todo tool for structured in-session task management, with active todos injected as XML context.",
+  "version": "2026.4.17",
+  "install": {
+    "npmSpec": "@openclaw/todo-manager"
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "maxTodos": {
+        "type": "number",
+        "description": "Maximum active todos to inject (default: 20)"
+      },
+      "injectDone": {
+        "type": "boolean",
+        "description": "Include completed todos in context injection (default: false)"
+      },
+      "injectIntoContext": {
+        "type": "boolean",
+        "description": "Inject active todos as XML context every turn (default: true)"
+      }
+    }
+  }
+}

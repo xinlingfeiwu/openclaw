@@ -29,7 +29,11 @@
       },
       "maxPromptLengthForFast": {
         "type": "number",
-        "description": "Prompts longer than this (chars) always use primary model (default: 800)"
+        "description": "Prompts longer than this (chars) always use primary model (default: 160)"
+      },
+      "maxPromptWordsForFast": {
+        "type": "number",
+        "description": "Prompts with more words than this always use primary model (default: 28)"
       }
     }
   },
@@ -56,7 +60,11 @@
     },
     "maxPromptLengthForFast": {
       "label": "Max Prompt Length for Fast Model",
-      "help": "Prompts longer than this char count always use the primary model (default: 800)"
+      "help": "Prompts longer than this char count always use the primary model (default: 160)"
+    },
+    "maxPromptWordsForFast": {
+      "label": "Max Prompt Words for Fast Model",
+      "help": "Prompts with more words than this always use the primary model (default: 28)"
     }
   }
 }

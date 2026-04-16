@@ -1,0 +1,38 @@
+{
+  "id": "smart-provider-fallback",
+  "name": "Smart Provider Fallback",
+  "description": "Tracks provider failure rates and auto-switches to a fallback provider when failure rate exceeds threshold.",
+  "version": "2026.4.17",
+  "install": {
+    "npmSpec": "@openclaw/smart-provider-fallback"
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "ringBufferSize": {
+        "type": "number",
+        "description": "Number of recent calls to track for failure rate (default: 10)"
+      },
+      "failureRateThreshold": {
+        "type": "number",
+        "description": "Failure rate (0-1) above which to switch providers (default: 0.4)"
+      },
+      "fallbackProvider": {
+        "type": "string",
+        "description": "Provider ID to use when primary fails"
+      },
+      "fallbackModel": {
+        "type": "string",
+        "description": "Model ID to use with fallback provider"
+      },
+      "recoverySuccessCount": {
+        "type": "number",
+        "description": "Successful calls needed to restore primary provider (default: 3)"
+      }
+    }
+  }
+}

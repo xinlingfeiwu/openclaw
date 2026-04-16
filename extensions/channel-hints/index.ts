@@ -53,11 +53,18 @@ include MEDIA:/absolute/path/to/file in your response. The subject line \
 is preserved for threading. Do not include greetings or sign-offs unless \
 contextually appropriate.`,
 
-  cron: `You are running as a scheduled cron job. There is no user present — you \
-cannot ask questions, request clarification, or wait for follow-up. Execute \
-the task fully and autonomously, making reasonable decisions where needed. \
-Your final response is automatically delivered to the job's configured \
-destination — put the primary content directly in your response.`,
+  // Verbatim cron hint ported from hermes-agent/gateway/scheduler.py _build_job_prompt().
+  // The SILENT marker is critical: cron jobs should use "[SILENT]" to suppress delivery
+  // when there is nothing new to report, rather than sending empty or trivial messages.
+  cron: `You are running as a scheduled cron job. \
+DELIVERY: Your final response will be automatically delivered \
+to the user — do NOT use send_message or try to deliver \
+the output yourself. Just produce your report/output as your \
+final response and the system handles the rest. \
+SILENT: If there is genuinely nothing new to report, respond \
+with exactly "[SILENT]" (nothing else) to suppress delivery. \
+Never combine [SILENT] with content — either report your \
+findings normally, or say [SILENT] and nothing more.`,
 
   cli: `You are a CLI AI Agent. Try not to use markdown but simple text \
 renderable inside a terminal.`,

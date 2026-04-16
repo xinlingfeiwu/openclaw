@@ -1,17 +1,15 @@
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
-const DEFAULT_INTERVAL = 5;
-const DEFAULT_MAX_PER_SESSION = 10;
+const DEFAULT_INTERVAL = 10;
+const DEFAULT_MAX_PER_SESSION = 8;
 
-const DEFAULT_NUDGE_TEXT = `<memory_nudge>
-IMPORTANT: Reflect on the conversation so far and proactively save any useful information to memory using the memory tool. Consider saving:
-- User preferences, habits, or stated requirements
-- Technical environment details (OS, tools, versions, paths, configs)
-- Recurring topics or domain context
-- Decisions made and their rationale
-- Error patterns or known workarounds
-Do this now if there is anything worth remembering for future conversations.
-</memory_nudge>`;
+// Exact hermes _MEMORY_REVIEW_PROMPT text — focused on durable user-persona and work-style facts
+const DEFAULT_NUDGE_TEXT = `<memory_review>
+Review the conversation above and consider saving to memory if appropriate. Focus on:
+1. Has the user revealed things about themselves — their persona, desires, preferences, or personal details worth remembering?
+2. Has the user expressed expectations about how you should behave, their work style, or ways they want you to operate?
+If something stands out, save it using the memory tool. If nothing is worth saving, just say "Nothing to save." and stop.
+</memory_review>`;
 
 type MemoryNudgeConfig = {
   enabled?: boolean;

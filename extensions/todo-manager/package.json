@@ -1,0 +1,15 @@
+{
+  "name": "@openclaw/todo-manager",
+  "version": "2026.4.17",
+  "private": true,
+  "description": "In-session structured task list that survives context compaction — agent manages tasks via a registered tool",
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.49"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

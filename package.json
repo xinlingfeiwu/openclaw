@@ -989,6 +989,26 @@
       "types": "./dist/plugin-sdk/smart-router.d.ts",
       "default": "./dist/plugin-sdk/smart-router.js"
     },
+    "./plugin-sdk/context-fence": {
+      "types": "./dist/plugin-sdk/context-fence.d.ts",
+      "default": "./dist/plugin-sdk/context-fence.js"
+    },
+    "./plugin-sdk/soul-personality": {
+      "types": "./dist/plugin-sdk/soul-personality.d.ts",
+      "default": "./dist/plugin-sdk/soul-personality.js"
+    },
+    "./plugin-sdk/insights-tracker": {
+      "types": "./dist/plugin-sdk/insights-tracker.d.ts",
+      "default": "./dist/plugin-sdk/insights-tracker.js"
+    },
+    "./plugin-sdk/smart-approvals": {
+      "types": "./dist/plugin-sdk/smart-approvals.d.ts",
+      "default": "./dist/plugin-sdk/smart-approvals.js"
+    },
+    "./plugin-sdk/skill-security-scan": {
+      "types": "./dist/plugin-sdk/skill-security-scan.d.ts",
+      "default": "./dist/plugin-sdk/skill-security-scan.js"
+    },
     "./plugin-sdk/native-command-registry": {
       "types": "./dist/plugin-sdk/native-command-registry.d.ts",
       "default": "./dist/plugin-sdk/native-command-registry.js"

@@ -1,0 +1,26 @@
+{
+  "id": "smart-approvals",
+  "name": "Smart Approvals",
+  "description": "Learns from user approval decisions. For sensitive tool patterns approved before, adds a reminder. Saves patterns to ~/.openclaw/approved-patterns.json.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "patternsFile": {
+        "type": "string",
+        "description": "Where to save approved patterns (default: ~/.openclaw/approved-patterns.json)"
+      },
+      "sensitiveTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Tool names that need approval scanning (default: bash, run_terminal_cmd, computer)"
+      },
+      "dangerousPatterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Regex patterns for dangerous commands requiring approval"
+      }
+    }
+  }
+}

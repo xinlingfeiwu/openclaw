@@ -1,0 +1,7 @@
+{
+  "name": "@openclaw/skill-security-scan",
+  "version": "2026.4.14",
+  "private": true,
+  "type": "module",
+  "openclaw": { "extensions": ["./index.ts"] }
+}

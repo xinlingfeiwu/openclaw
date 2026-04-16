@@ -1,0 +1,12 @@
+{
+  "id": "context-fence",
+  "name": "Context Fence",
+  "description": "Injects XML context-marker guidance into the system prompt so agents treat recalled memory and compaction summaries as reference-only, preventing confusion with new user input.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" }
+    }
+  }
+}

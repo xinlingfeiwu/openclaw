@@ -1,0 +1,7 @@
+{
+  "name": "@openclaw/context-fence",
+  "version": "2026.4.14",
+  "private": true,
+  "type": "module",
+  "openclaw": { "extensions": ["./index.ts"] }
+}

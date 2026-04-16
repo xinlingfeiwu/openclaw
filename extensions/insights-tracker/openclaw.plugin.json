@@ -1,0 +1,20 @@
+{
+  "id": "insights-tracker",
+  "name": "Insights Tracker",
+  "description": "Tracks tool usage, response times, and session stats to ~/.openclaw/insights/stats.json for behavioral analysis.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "statsFile": {
+        "type": "string",
+        "description": "Where to write stats (default: ~/.openclaw/insights/stats.json)"
+      },
+      "maxHistoryDays": {
+        "type": "number",
+        "description": "Days of history to retain (default: 30)"
+      }
+    }
+  }
+}

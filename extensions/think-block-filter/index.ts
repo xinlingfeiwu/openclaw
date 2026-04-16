@@ -69,21 +69,18 @@ export default definePluginEntry({
 
     const placeholder = typeof cfg.placeholder === "string" ? cfg.placeholder : "";
 
-    api.on("before_agent_reply", (event, _ctx) => {
-      const ev = event as { cleanedBody?: string };
-      if (!ev.cleanedBody) {
+    api.on("message_sending", (event, _ctx) => {
+      const ev = event as { content?: string };
+      if (!ev.content) {
         return undefined;
       }
 
-      const filtered = stripThinkBlocks(ev.cleanedBody, placeholder);
-      if (filtered === ev.cleanedBody) {
+      const filtered = stripThinkBlocks(ev.content, placeholder);
+      if (filtered === ev.content) {
         return undefined;
       }
 
-      // Return a modified reply — return void to let core handle delivery unchanged,
-      // or signal the modified text via the reply payload shape
-      ev.cleanedBody = filtered;
-      return undefined;
+      return { content: filtered };
     });
   },
 });

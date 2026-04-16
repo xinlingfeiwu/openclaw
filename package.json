@@ -961,6 +961,10 @@
       "types": "./dist/plugin-sdk/memory-lancedb.d.ts",
       "default": "./dist/plugin-sdk/memory-lancedb.js"
     },
+    "./plugin-sdk/memory-nudge": {
+      "types": "./dist/plugin-sdk/memory-nudge.d.ts",
+      "default": "./dist/plugin-sdk/memory-nudge.js"
+    },
     "./plugin-sdk/msteams": {
       "types": "./dist/plugin-sdk/msteams.d.ts",
       "default": "./dist/plugin-sdk/msteams.js"

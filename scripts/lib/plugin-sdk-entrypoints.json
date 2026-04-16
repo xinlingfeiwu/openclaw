@@ -226,6 +226,7 @@
   "memory-host-search",
   "memory-host-status",
   "memory-lancedb",
+  "memory-nudge",
   "msteams",
   "models-provider-runtime",
   "skill-commands-runtime",

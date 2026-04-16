@@ -240,6 +240,8 @@
   "skill-security-scan",
   "checkpoint-rollback",
   "process-monitor",
+  "smart-compaction",
+  "prompt-cache-anchor",
   "native-command-registry",
   "nextcloud-talk",
   "nostr",

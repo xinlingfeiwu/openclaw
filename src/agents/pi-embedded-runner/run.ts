@@ -581,21 +581,29 @@ export async function runEmbeddedPiAgent(
         // When the engine owns compaction, compactEmbeddedPiSessionDirect is
         // bypassed. Fire lifecycle hooks here so recovery paths still notify
         // subscribers like memory extensions and usage trackers.
-        const runOwnsCompactionBeforeHook = async (reason: string) => {
+        // Returns true if a hook requested that compaction be skipped.
+        const runOwnsCompactionBeforeHook = async (reason: string): Promise<boolean> => {
           if (
             contextEngine.info.ownsCompaction !== true ||
             !hookRunner?.hasHooks("before_compaction")
           ) {
-            return;
+            return false;
           }
           try {
-            await hookRunner.runBeforeCompaction(
+            const hookResult = await hookRunner.runBeforeCompaction(
               { messageCount: -1, sessionFile: params.sessionFile },
               hookCtx,
             );
+            if (hookResult?.skip === true) {
+              log.info(
+                `before_compaction hook requested skip during ${reason}: ${hookResult.skipReason ?? "no reason given"}`,
+              );
+              return true;
+            }
           } catch (hookErr) {
             log.warn(`before_compaction hook failed during ${reason}: ${String(hookErr)}`);
           }
+          return false;
         };
         const runOwnsCompactionAfterHook = async (
           reason: string,
@@ -906,7 +914,12 @@ export async function runEmbeddedPiAgent(
                   `attempting compaction before retry (attempt ${timeoutCompactionAttempts}/${MAX_TIMEOUT_COMPACTION_ATTEMPTS}) diagId=${timeoutDiagId}`,
               );
               let timeoutCompactResult: Awaited<ReturnType<typeof contextEngine.compact>>;
-              await runOwnsCompactionBeforeHook("timeout recovery");
+              const timeoutHookSkip = await runOwnsCompactionBeforeHook("timeout recovery");
+              if (timeoutHookSkip) {
+                log.warn(
+                  "[timeout-compaction] before_compaction hook requested skip, but proceeding with recovery compaction to avoid token overflow",
+                );
+              }
               try {
                 const timeoutCompactionRuntimeContext = {
                   ...buildEmbeddedCompactionRuntimeContext({
@@ -1048,7 +1061,12 @@ export async function runEmbeddedPiAgent(
                 `context overflow detected (attempt ${overflowCompactionAttempts}/${MAX_OVERFLOW_COMPACTION_ATTEMPTS}); attempting auto-compaction for ${provider}/${modelId}`,
               );
               let compactResult: Awaited<ReturnType<typeof contextEngine.compact>>;
-              await runOwnsCompactionBeforeHook("overflow recovery");
+              const overflowHookSkip = await runOwnsCompactionBeforeHook("overflow recovery");
+              if (overflowHookSkip) {
+                log.warn(
+                  "before_compaction hook requested skip, but proceeding with overflow recovery compaction",
+                );
+              }
               try {
                 const overflowCompactionRuntimeContext = {
                   ...buildEmbeddedCompactionRuntimeContext({

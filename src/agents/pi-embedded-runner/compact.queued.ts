@@ -146,13 +146,19 @@ export async function compactEmbeddedPiSession(
         // can read the transcript themselves if they need exact counts.
         if (hookRunner?.hasHooks?.("before_compaction") && hookRunner.runBeforeCompaction) {
           try {
-            await hookRunner.runBeforeCompaction(
+            const beforeResult = await hookRunner.runBeforeCompaction(
               {
                 messageCount: -1,
                 sessionFile: params.sessionFile,
               },
               hookCtx,
             );
+            if (beforeResult?.skip === true) {
+              log.info("compaction skipped by before_compaction hook", {
+                reason: beforeResult.skipReason ?? "no reason given",
+              });
+              return { ok: true, compacted: false, reason: "skipped by before_compaction hook" };
+            }
           } catch (err) {
             log.warn("before_compaction hook failed", {
               errorMessage: formatErrorMessage(err),

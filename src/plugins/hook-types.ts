@@ -203,6 +203,17 @@ export type PluginHookBeforeCompactionEvent = {
   sessionFile?: string;
 };
 
+/**
+ * Return value for before_compaction hook handlers.
+ * Return `{ skip: true }` to suppress this compaction cycle.
+ * Omitting or returning void/undefined lets compaction proceed normally.
+ */
+export type PluginHookBeforeCompactionResult = {
+  skip?: boolean;
+  /** Optional reason logged when skip=true. */
+  skipReason?: string;
+};
+
 export type PluginHookBeforeResetEvent = {
   sessionFile?: string;
   messages?: unknown[];
@@ -601,7 +612,7 @@ export type PluginHookHandlerMap = {
   before_compaction: (
     event: PluginHookBeforeCompactionEvent,
     ctx: PluginHookAgentContext,
-  ) => Promise<void> | void;
+  ) => Promise<PluginHookBeforeCompactionResult | void> | PluginHookBeforeCompactionResult | void;
   after_compaction: (
     event: PluginHookAfterCompactionEvent,
     ctx: PluginHookAgentContext,

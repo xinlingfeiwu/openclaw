@@ -3,6 +3,7 @@ import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { createInternalHookEvent, triggerInternalHook } from "../../hooks/internal-hooks.js";
 import { formatErrorMessage } from "../../infra/errors.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
+import type { PluginHookBeforeCompactionResult } from "../../plugins/hook-types.js";
 import { getActiveMemorySearchManager } from "../../plugins/memory-runtime.js";
 import { emitSessionTranscriptUpdate } from "../../sessions/transcript-events.js";
 import { resolveSessionAgentId } from "../agent-scope.js";
@@ -108,7 +109,7 @@ export type CompactionHookRunner = {
       workspaceDir: string;
       messageProvider?: string;
     },
-  ) => Promise<void> | void;
+  ) => Promise<PluginHookBeforeCompactionResult | void> | PluginHookBeforeCompactionResult | void;
   runAfterCompaction?: (
     metrics: {
       messageCount: number;
@@ -199,7 +200,7 @@ export async function runBeforeCompactionHooks(params: {
   }
   if (params.hookRunner?.hasHooks?.("before_compaction")) {
     try {
-      await params.hookRunner.runBeforeCompaction?.(
+      const hookResult = await params.hookRunner.runBeforeCompaction?.(
         {
           messageCount: params.metrics.messageCountBefore,
           tokenCount: params.metrics.tokenCountBefore,
@@ -212,6 +213,12 @@ export async function runBeforeCompactionHooks(params: {
           messageProvider: params.messageProvider,
         },
       );
+      if (hookResult?.skip === true) {
+        log.info("before_compaction hook requested skip", {
+          reason: hookResult.skipReason ?? "no reason given",
+        });
+        return { hookSessionKey, missingSessionKey, skip: true };
+      }
     } catch (err) {
       log.warn("before_compaction hook failed", {
         errorMessage: formatErrorMessage(err),
@@ -222,6 +229,7 @@ export async function runBeforeCompactionHooks(params: {
   return {
     hookSessionKey,
     missingSessionKey,
+    skip: false,
   };
 }
 

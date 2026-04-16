@@ -1,0 +1,16 @@
+{
+  "id": "prompt-cache-anchor",
+  "name": "Prompt Cache Anchor",
+  "description": "Appends a stable, byte-identical anchor comment to the system prompt to maximize Anthropic automatic prefix-cache hits.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "anchor": {
+        "type": "string",
+        "description": "The anchor string to append (must be stable across turns)"
+      }
+    }
+  }
+}

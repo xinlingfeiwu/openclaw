@@ -28,6 +28,7 @@ import type {
   PluginHookBeforePromptBuildEvent,
   PluginHookBeforePromptBuildResult,
   PluginHookBeforeCompactionEvent,
+  PluginHookBeforeCompactionResult,
   PluginHookInboundClaimContext,
   PluginHookInboundClaimEvent,
   PluginHookInboundClaimResult,
@@ -611,12 +612,25 @@ export function createHookRunner(
 
   /**
    * Run before_compaction hook.
+   * Returns the merged result; callers should check `result?.skip === true`
+   * to suppress the compaction cycle.
    */
   async function runBeforeCompaction(
     event: PluginHookBeforeCompactionEvent,
     ctx: PluginHookAgentContext,
-  ): Promise<void> {
-    return runVoidHook("before_compaction", event, ctx);
+  ): Promise<PluginHookBeforeCompactionResult | undefined> {
+    return runModifyingHook<"before_compaction", PluginHookBeforeCompactionResult>(
+      "before_compaction",
+      event,
+      ctx,
+      {
+        // Merge results: if ANY handler says skip, we skip.
+        mergeResults: (prev, next) => ({
+          skip: (prev?.skip ?? false) || (next?.skip ?? false),
+          skipReason: next?.skipReason ?? prev?.skipReason,
+        }),
+      },
+    );
   }
 
   /**

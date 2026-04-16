@@ -1017,6 +1017,14 @@
       "types": "./dist/plugin-sdk/process-monitor.d.ts",
       "default": "./dist/plugin-sdk/process-monitor.js"
     },
+    "./plugin-sdk/smart-compaction": {
+      "types": "./dist/plugin-sdk/smart-compaction.d.ts",
+      "default": "./dist/plugin-sdk/smart-compaction.js"
+    },
+    "./plugin-sdk/prompt-cache-anchor": {
+      "types": "./dist/plugin-sdk/prompt-cache-anchor.d.ts",
+      "default": "./dist/plugin-sdk/prompt-cache-anchor.js"
+    },
     "./plugin-sdk/native-command-registry": {
       "types": "./dist/plugin-sdk/native-command-registry.d.ts",
       "default": "./dist/plugin-sdk/native-command-registry.js"

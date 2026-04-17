@@ -3,10 +3,56 @@ import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 const DEFAULT_COOLDOWN_MS = 120_000; // 2 minutes
 const DEFAULT_MIN_MESSAGES = 10;
 
+// Structured 13-section compaction template guidance (ported from hermes context_compressor.py).
+// Injected via appendSystemContext so the agent and compaction LLM receive consistent guidance.
+const COMPACTION_TEMPLATE_GUIDANCE = `
+When compressing or summarizing conversation context, use this structured 13-section template:
+
+## Active Task
+What the user is currently trying to accomplish.
+
+## Goal
+The ultimate objective or deliverable.
+
+## Completed Actions
+What has been done so far (concise bullet points, past tense).
+
+## Active State
+Current state of files, processes, and system (what exists right now after changes).
+
+## In Progress
+Work currently in flight (if anything is mid-execution).
+
+## Blocked
+Items waiting on external input or blocked by an issue (with reason).
+
+## Key Decisions
+Important choices made and the rationale behind them.
+
+## Resolved Questions
+Questions or ambiguities that were clarified during this session.
+
+## Pending User Asks
+Questions or requests from the agent still awaiting user response.
+
+## Relevant Files
+Key files modified or created (relative paths preferred, one per line).
+
+## Remaining Work
+Clear ordered list of what still needs to be done to complete the goal.
+
+## Constraints
+Hard rules, requirements, or limitations in effect for this task.
+
+## Critical Context
+Any information that absolutely must survive into the next session.`.trim();
+
 type SmartCompactionConfig = {
   enabled?: boolean;
   cooldownMs?: number;
   minMessagesSinceLastCompaction?: number;
+  /** Whether to inject structured compaction template guidance into system prompt (default: true) */
+  injectTemplate?: boolean;
 };
 
 type SessionState = {
@@ -21,10 +67,12 @@ export default definePluginEntry({
   id: "smart-compaction",
   name: "Smart Compaction",
   description:
-    "Anti-thrash compaction guard: skips compaction if one ran recently within the cooldown window.",
+    "Anti-thrash compaction guard: skips compaction if one ran recently within the cooldown window. Also injects a structured 13-section compaction template into the system prompt to improve summary quality (ported from hermes context_compressor.py).",
   register(api: OpenClawPluginApi) {
     const cfg = (api.pluginConfig ?? {}) as SmartCompactionConfig;
-    if (cfg.enabled === false) return;
+    if (cfg.enabled === false) {
+      return;
+    }
 
     const cooldownMs =
       typeof cfg.cooldownMs === "number" && cfg.cooldownMs >= 0
@@ -36,6 +84,15 @@ export default definePluginEntry({
       cfg.minMessagesSinceLastCompaction >= 0
         ? cfg.minMessagesSinceLastCompaction
         : DEFAULT_MIN_MESSAGES;
+
+    const injectTemplate = cfg.injectTemplate !== false;
+
+    // Inject structured 13-section compaction template via system prompt
+    if (injectTemplate) {
+      api.on("before_prompt_build", (_event, _ctx) => {
+        return { appendSystemContext: `\n\n${COMPACTION_TEMPLATE_GUIDANCE}\n` };
+      });
+    }
 
     api.on("after_compaction", async (ev, ctx) => {
       const event = ev as { messageCount?: number };
@@ -56,7 +113,9 @@ export default definePluginEntry({
         (ctx as { agentId?: string }).agentId ??
         "default";
       const state = sessionState.get(key);
-      if (!state) return undefined;
+      if (!state) {
+        return undefined;
+      }
 
       const msSince = Date.now() - state.lastCompactionAt;
       if (msSince < cooldownMs) {

@@ -3,6 +3,47 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
+// Model pricing in USD per 1M tokens (input/output/cacheRead).
+// Fuzzy-matched: if model name contains a key (or key contains model name), pricing applies.
+const MODEL_PRICING: Record<string, { input: number; output: number; cacheRead: number }> = {
+  "gpt-5.4": { input: 2.5, output: 10.0, cacheRead: 1.25 },
+  "gpt-5.4-mini": { input: 0.15, output: 0.6, cacheRead: 0.075 },
+  "gpt-4.1": { input: 2.0, output: 8.0, cacheRead: 0.5 },
+  "claude-opus-4.7": { input: 15.0, output: 75.0, cacheRead: 1.5 },
+  "claude-opus-4.6": { input: 15.0, output: 75.0, cacheRead: 1.5 },
+  "claude-opus-4.5": { input: 15.0, output: 75.0, cacheRead: 1.5 },
+  "claude-sonnet-4.6": { input: 3.0, output: 15.0, cacheRead: 0.3 },
+  "claude-sonnet-4.5": { input: 3.0, output: 15.0, cacheRead: 0.3 },
+  "claude-haiku-4.5": { input: 0.8, output: 4.0, cacheRead: 0.08 },
+  "gemini-2.5-pro": { input: 1.25, output: 5.0, cacheRead: 0.31 },
+  "gemini-2.5-flash": { input: 0.075, output: 0.3, cacheRead: 0.019 },
+};
+
+function findPricing(model: string): { input: number; output: number; cacheRead: number } | null {
+  const lower = model.toLowerCase();
+  // Exact match first (longest matching key wins)
+  let best: { input: number; output: number; cacheRead: number } | null = null;
+  let bestLen = 0;
+  for (const [key, pricing] of Object.entries(MODEL_PRICING)) {
+    if (lower.includes(key.toLowerCase()) && key.length > bestLen) {
+      best = pricing;
+      bestLen = key.length;
+    }
+  }
+  return best;
+}
+
+function estimateCostUsd(stat: TokenUsageStat): number {
+  const pricing = findPricing(stat.model);
+  if (!pricing) {
+    return 0;
+  }
+  const inputCost = ((stat.inputTokens + stat.cacheWriteTokens) / 1_000_000) * pricing.input;
+  const outputCost = (stat.outputTokens / 1_000_000) * pricing.output;
+  const cacheReadCost = (stat.cacheReadTokens / 1_000_000) * pricing.cacheRead;
+  return inputCost + outputCost + cacheReadCost;
+}
+
 type InsightsConfig = {
   enabled?: boolean;
   statsFile?: string;
@@ -179,9 +220,10 @@ export default definePluginEntry({
         saveData(statsFile, data);
         const totalIn = session.tokenUsage.reduce((sum, t) => sum + t.inputTokens, 0);
         const totalOut = session.tokenUsage.reduce((sum, t) => sum + t.outputTokens, 0);
+        const estimatedUsd = session.tokenUsage.reduce((sum, t) => sum + estimateCostUsd(t), 0);
         api.logger.info?.(
           `insights-tracker: saved stats for session ${sessionId} ` +
-            `(${session.toolCalls.length} tool calls, tokens in=${totalIn} out=${totalOut})`,
+            `(${session.toolCalls.length} tool calls, tokens in=${totalIn} out=${totalOut}, ~$${estimatedUsd.toFixed(4)} USD)`,
         );
       } catch (e) {
         api.logger.warn?.(`insights-tracker: failed to save stats: ${String(e)}`);

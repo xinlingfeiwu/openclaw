@@ -13,7 +13,7 @@ const DEFAULT_SIMPLE_PATTERNS = [
   /^(summarize|summary|sum up)[:\s]/i,
 ];
 
-// Hermes full 34-keyword complex vocabulary list. Any match → primary model.
+// Hermes full 46-keyword complex vocabulary list. Any match → primary model.
 const COMPLEX_KEYWORDS = new Set([
   "debug",
   "debugging",
@@ -49,6 +49,19 @@ const COMPLEX_KEYWORDS = new Set([
   "cron",
   "docker",
   "kubernetes",
+  // Added in hermes v0.10.0 (34 → 46)
+  "scaffold",
+  "bootstrap",
+  "deploy",
+  "deployment",
+  "migrate",
+  "migration",
+  "integration",
+  "performance",
+  "regression",
+  "pipeline",
+  "microservices",
+  "workflow",
 ]);
 
 // Default complex patterns: multi-line code, backticks, URLs, CJK analysis terms
@@ -119,7 +132,7 @@ function classifyPrompt(
     return "primary";
   }
 
-  // Check hermes 34-keyword complex vocabulary
+  // Check hermes 46-keyword complex vocabulary
   const words = trimmed.toLowerCase().split(/\W+/).filter(Boolean);
   for (const word of words) {
     if (COMPLEX_KEYWORDS.has(word)) {

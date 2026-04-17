@@ -570,6 +570,13 @@ const THREAT_PATTERNS: ThreatPattern[] = [
   },
 ];
 
+// Invisible/directional unicode characters used for steganographic prompt injection.
+// Covers: zero-width space/non-joiner/joiner, word joiner, BOM, paragraph separators,
+// LTR/RTL marks, and directional override/isolate/pop characters (U+202A–202E).
+// Uses alternation (not character class) to avoid no-misleading-character-class lint rule.
+const INVISIBLE_UNICODE_RE =
+  /\u200B|\u200C|\u200D|\u2060|\uFEFF|\u2028|\u2029|\u200E|\u200F|\u202A|\u202B|\u202C|\u202D|\u202E/;
+
 type SkillSecurityConfig = {
   enabled?: boolean;
   blockOnThreat?: boolean;
@@ -597,6 +604,17 @@ type ThreatFinding = {
 
 function scanContent(content: string): ThreatFinding[] {
   const findings: ThreatFinding[] = [];
+
+  // Check for invisible/directional unicode steganographic injection
+  if (INVISIBLE_UNICODE_RE.test(content)) {
+    findings.push({
+      name: "invisible-unicode-injection",
+      category: "prompt_injection",
+      severity: "critical",
+      match: "invisible or directional unicode characters detected (U+200B–202E range)",
+    });
+  }
+
   for (const { name, category, severity, pattern } of THREAT_PATTERNS) {
     const m = content.match(pattern);
     if (m) {
@@ -612,7 +630,7 @@ export default definePluginEntry({
   id: "skill-security-scan",
   name: "Skill Security Scan",
   description:
-    "Scans skill file writes for 78+ threat patterns across 9 categories (prompt injection, exfiltration, destructive, persistence, network, obfuscation, supply chain, privilege escalation, credential exposure). Ported from hermes-agent/tools/skills_guard.py.",
+    "Scans skill file writes for 79+ threat patterns across 9 categories (prompt injection, exfiltration, destructive, persistence, network, obfuscation, supply chain, privilege escalation, credential exposure), plus invisible/directional unicode steganographic injection detection. Ported from hermes-agent/tools/skills_guard.py.",
   register(api: OpenClawPluginApi) {
     const cfg = (api.pluginConfig ?? {}) as SkillSecurityConfig;
     if (cfg.enabled === false) {
@@ -670,7 +688,7 @@ export default definePluginEntry({
       );
 
       // Auto-block if blockOnThreat OR if any critical finding (hardcoded for safety)
-      if (blockOnThreat || (hasCritical && cfg.blockOnThreat !== false)) {
+      if (cfg.blockOnThreat || (hasCritical && cfg.blockOnThreat !== false)) {
         return {
           block: true,
           blockReason: `Skill Security Guard blocked write to \`${filePath}\` — ${findings.length} threat(s) detected:\n\n${findings

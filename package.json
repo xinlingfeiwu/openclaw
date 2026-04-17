@@ -1021,6 +1021,14 @@
       "types": "./dist/plugin-sdk/smart-compaction.d.ts",
       "default": "./dist/plugin-sdk/smart-compaction.js"
     },
+    "./plugin-sdk/rate-limit-guard": {
+      "types": "./dist/plugin-sdk/rate-limit-guard.d.ts",
+      "default": "./dist/plugin-sdk/rate-limit-guard.js"
+    },
+    "./plugin-sdk/subdirectory-hints": {
+      "types": "./dist/plugin-sdk/subdirectory-hints.d.ts",
+      "default": "./dist/plugin-sdk/subdirectory-hints.js"
+    },
     "./plugin-sdk/prompt-cache-anchor": {
       "types": "./dist/plugin-sdk/prompt-cache-anchor.d.ts",
       "default": "./dist/plugin-sdk/prompt-cache-anchor.js"

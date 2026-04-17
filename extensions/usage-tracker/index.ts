@@ -71,7 +71,7 @@ function saveUsage(file: string, data: UsageData): void {
       mkdirSync(dir, { recursive: true });
     }
     data.lastUpdated = new Date().toISOString();
-    writeFileSync(file, JSON.stringify(data, null, 2));
+    writeFileSync(file, JSON.stringify(data, null, 2), { mode: 0o600 });
   } catch {}
 }
 

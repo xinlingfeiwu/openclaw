@@ -687,8 +687,8 @@ export default definePluginEntry({
         `skill-security-scan: ${hasCritical ? "CRITICAL" : "HIGH"} threat in skill file "${filePath}": ${summary}`,
       );
 
-      // Auto-block if blockOnThreat OR if any critical finding (hardcoded for safety)
-      if (cfg.blockOnThreat || (hasCritical && cfg.blockOnThreat !== false)) {
+      // Auto-block if blockOnThreat is explicitly enabled, OR if any critical finding
+      if (cfg.blockOnThreat === true || (hasCritical && cfg.blockOnThreat !== false)) {
         return {
           block: true,
           blockReason: `Skill Security Guard blocked write to \`${filePath}\` — ${findings.length} threat(s) detected:\n\n${findings

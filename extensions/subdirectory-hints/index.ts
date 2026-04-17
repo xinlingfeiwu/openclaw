@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs";
+import { lstatSync, readFileSync } from "fs";
 import { dirname, join, resolve } from "path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
@@ -9,6 +9,10 @@ const DEFAULT_FILE_READ_TOOLS = ["read_file", "view", "cat", "read", "str_replac
 // Context file names to look for, in priority order (first match wins per directory)
 const CONTEXT_FILES = ["AGENTS.md", "CLAUDE.md", ".cursorrules"];
 
+// Obvious prompt injection patterns — block context files containing these
+const INJECTION_RE =
+  /(?:ignore[^.]*(?:previous|above|prior|all)[^.]*(?:instruction|system|prompt)|you\s+are\s+now\s+(?!an?\s+(?:ai\s+)?(?:helpful|assistant|agent|copilot))|<\s*system\s*>)/i;
+
 type SubdirectoryHintsConfig = {
   enabled?: boolean;
   maxDepth?: number;
@@ -18,23 +22,36 @@ type SubdirectoryHintsConfig = {
 
 /**
  * Walk ancestor directories up to maxDepth levels looking for a context file.
- * Returns { filePath, content } for the first match found, or null.
+ * Restricts traversal to within projectRoot to prevent reading arbitrary system files.
+ * Returns { filePath, content } for the first non-injected match, or null.
  */
 function findContextFile(
   startDir: string,
   maxDepth: number,
+  projectRoot: string,
 ): { filePath: string; content: string } | null {
   let dir = resolve(startDir);
   for (let depth = 0; depth < maxDepth; depth++) {
+    // Do not walk outside the project root
+    if (!dir.startsWith(projectRoot + "/") && dir !== projectRoot) {
+      break;
+    }
     for (const name of CONTEXT_FILES) {
       const candidate = join(dir, name);
-      if (existsSync(candidate)) {
-        try {
-          const content = readFileSync(candidate, "utf8");
-          return { filePath: candidate, content };
-        } catch {
-          // Skip unreadable file
+      try {
+        // Reject symlinks to prevent TOCTOU symlink attacks
+        const stat = lstatSync(candidate);
+        if (!stat.isFile() || stat.isSymbolicLink()) {
+          continue;
         }
+        const content = readFileSync(candidate, "utf8");
+        // Block context files containing obvious prompt injection patterns
+        if (INJECTION_RE.test(content)) {
+          continue;
+        }
+        return { filePath: candidate, content };
+      } catch {
+        // Skip unreadable or non-existent files
       }
     }
     const parent = dirname(dir);
@@ -110,6 +127,9 @@ export default definePluginEntry({
     // Directories whose context file has already been injected this session
     const loadedDirs = new Set<string>();
 
+    // Restrict traversal to project root to prevent reading arbitrary system files
+    const projectRoot = process.cwd();
+
     api.on("before_tool_call", (event, ctx) => {
       const ev = event as { toolName?: string; params?: unknown };
       const toolName = ev.toolName ?? ctx.toolName;
@@ -144,7 +164,7 @@ export default definePluginEntry({
         return undefined;
       }
 
-      const found = findContextFile(dir, maxDepth);
+      const found = findContextFile(dir, maxDepth, projectRoot);
       if (!found) {
         return undefined;
       }

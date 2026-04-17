@@ -41,7 +41,12 @@ function formatTodosForContext(items: TodoItem[]): string {
   }
   const lines = active.map((t) => {
     const icon = t.status === "in_progress" ? "▶" : "○";
-    return `${icon} [${t.id}] ${t.content}`;
+    // Escape HTML entities to prevent prompt injection via todo content
+    const safeContent = t.content.replace(
+      /[&<>"']/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c,
+    );
+    return `${icon} [${t.id}] ${safeContent}`;
   });
   return `<active_todos>\n${lines.join("\n")}\n</active_todos>`;
 }

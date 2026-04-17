@@ -68,7 +68,7 @@ const DEFAULT_SENSITIVE_TOOLS = new Set([
 
 type ApprovalPattern = {
   toolName: string;
-  commandPrefix: string; // first 40 chars of command, normalized
+  commandPrefix: string; // first 200 chars of command, normalized
   approvedAt: number;
   approvedCount: number;
 };
@@ -119,7 +119,7 @@ function extractCommandString(params: Record<string, unknown>): string {
 }
 
 function normalizeCommand(cmd: string): string {
-  return cmd.toLowerCase().replace(/\s+/g, " ").slice(0, 40);
+  return cmd.toLowerCase().replace(/\s+/g, " ").slice(0, 200);
 }
 
 function isDangerous(cmd: string, patterns: RegExp[]): boolean {

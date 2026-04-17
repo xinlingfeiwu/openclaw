@@ -8,6 +8,12 @@ import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 // Use sparingly — costs 3-5x tokens vs a single call.
 // Inspired by hermes-agent tools/mixture_of_agents_tool.py
 
+// Strip control characters and hard-limit size to prevent injection from rogue reference models.
+function sanitizeModelResponse(text: string): string {
+  // eslint-disable-next-line no-control-regex -- intentionally stripping C0 control chars except \t(9)\n(10)\r(13)
+  return text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").slice(0, 50_000);
+}
+
 type MixtureOfAgentsConfig = {
   enabled?: boolean;
   /** Reference models to query in parallel. Each entry: "provider/model" */
@@ -150,9 +156,12 @@ export default definePluginEntry({
             `mixture-of-agents: got ${successful.length}/${referenceModels.length} responses, aggregating`,
           );
 
-          // Build aggregation prompt
+          // Build aggregation prompt — sanitize model responses to prevent injection
           const refSection = successful
-            .map((r, i) => `## Response ${i + 1} (${r.provider}/${r.model})\n\n${r.text}`)
+            .map(
+              (r, i) =>
+                `## Response ${i + 1} (${r.provider}/${r.model})\n\n${sanitizeModelResponse(r.text ?? "")}`,
+            )
             .join("\n\n---\n\n");
 
           const aggregationPrompt =

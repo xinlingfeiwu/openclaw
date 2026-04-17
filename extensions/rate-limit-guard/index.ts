@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, renameSync, writeFileSync, readFileSync } from "fs";
 import { homedir } from "os";
-import { join, dirname } from "path";
+import { join, dirname, resolve } from "path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 const DEFAULT_COOLDOWN_MS = 300_000; // 5 minutes, same as hermes nous_rate_guard.py default
@@ -84,7 +84,14 @@ export default definePluginEntry({
         ? cfg.cooldownMs
         : DEFAULT_COOLDOWN_MS;
 
-    const rateLimitsDir = typeof cfg.rateLimitsDir === "string" ? cfg.rateLimitsDir : defaultDir();
+    const rawDir = typeof cfg.rateLimitsDir === "string" ? cfg.rateLimitsDir : defaultDir();
+    // Reject traversal: rateLimitsDir must be inside home directory
+    const expandedDir = rawDir.startsWith("~/") ? join(homedir(), rawDir.slice(2)) : rawDir;
+    const resolvedDir = resolve(expandedDir);
+    const rateLimitsDir =
+      resolvedDir.startsWith(homedir() + "/") || resolvedDir === homedir()
+        ? resolvedDir
+        : defaultDir();
 
     // Detect tool-level 429s (web search APIs, etc.)
     api.on("after_tool_call", (event, ctx) => {
@@ -163,7 +170,11 @@ export default definePluginEntry({
 
         const lines = active.map((s) => {
           const secsLeft = Math.ceil((s.resetAtMs - now) / 1000);
-          return `  - ${s.provider}: rate-limited (${secsLeft}s remaining, source: ${s.source})`;
+          // Sanitize provider name from disk before injecting into system prompt
+          const displayProvider = (s.provider ?? "unknown")
+            .replace(/[\n\r<>&"']/g, "_")
+            .slice(0, 80);
+          return `  - ${displayProvider}: rate-limited (${secsLeft}s remaining, source: ${s.source})`;
         });
         const warning =
           `\n\n[Rate Limit Guard] The following providers are currently rate-limited:\n` +

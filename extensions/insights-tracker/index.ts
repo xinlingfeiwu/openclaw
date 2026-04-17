@@ -111,7 +111,7 @@ function saveData(statsFile: string, data: InsightsData): void {
       mkdirSync(dir, { recursive: true });
     }
     data.lastUpdated = new Date().toISOString();
-    writeFileSync(statsFile, JSON.stringify(data, null, 2));
+    writeFileSync(statsFile, JSON.stringify(data, null, 2), { mode: 0o600 });
   } catch (e) {
     // Non-fatal: insights tracking should never disrupt agent operation
     appendFileSync("/tmp/openclaw-insights-error.log", `${String(e)}\n`);

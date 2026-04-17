@@ -152,8 +152,25 @@ export default definePluginEntry({
       return;
     }
 
-    const customHints =
+    const rawCustomHints =
       typeof cfg.customHints === "object" && cfg.customHints !== null ? cfg.customHints : {};
+
+    // Validate custom hints for obvious injection patterns at registration time
+    const CUSTOM_HINT_INJECTION_RE =
+      /(?:ignore[^.]*(?:previous|all|prior)[^.]*(?:instruction|system|prompt)|you\s+are\s+now|<\s*system\s*>)/i;
+    const customHints: Record<string, string> = {};
+    for (const [key, val] of Object.entries(rawCustomHints)) {
+      if (typeof val !== "string") {
+        continue;
+      }
+      if (CUSTOM_HINT_INJECTION_RE.test(val)) {
+        api.logger.warn?.(
+          `channel-hints: customHints["${key}"] contains suspicious injection pattern — skipped`,
+        );
+        continue;
+      }
+      customHints[key] = val;
+    }
 
     api.on("before_prompt_build", (_event, ctx) => {
       const channelId = (ctx as { channelId?: string }).channelId;

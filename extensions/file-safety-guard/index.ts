@@ -1,5 +1,6 @@
+import { existsSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import { resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 // Ported from hermes tools/file_operations.py — WRITE_DENIED_PATHS and WRITE_DENIED_PREFIXES.
@@ -94,10 +95,21 @@ function isWriteDenied(rawPath: string): { denied: boolean; reason: string } {
   const expanded = expandHome(rawPath);
   let resolved: string;
   try {
-    // Use resolve (not realpath) — realpath would fail for non-existent files
-    resolved = resolve(expanded);
+    // Use realpathSync for existing paths so symlinks can't bypass the blocklist.
+    // Fall back to resolve() for non-existent paths (files being created for the first time).
+    if (existsSync(expanded)) {
+      resolved = realpathSync(expanded);
+    } else {
+      // File doesn't exist yet — realpath the parent dir to catch symlinked ancestors.
+      const parent = dirname(resolve(expanded));
+      if (existsSync(parent)) {
+        resolved = join(realpathSync(parent), basename(resolve(expanded)));
+      } else {
+        resolved = resolve(expanded);
+      }
+    }
   } catch {
-    resolved = expanded;
+    resolved = resolve(expanded);
   }
 
   // Device path check — blocks infinite reads/writes

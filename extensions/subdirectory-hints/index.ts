@@ -184,28 +184,37 @@ export default definePluginEntry({
             `\n[... truncated at ${maxContextChars} chars]`
           : found.content;
 
-      const suffix = `\n\n[📁 Context from ${found.filePath}]\n${content}`;
-
-      // Build new message with appended context (AgentMessage union — handle via runtime shape)
+      // Silently append context to the tool result message by returning a modified copy.
+      // The tool_result_persist hook expects a return value of { message: AgentMessage }.
+      const appendix = `\n\n[📁 Context from ${found.filePath}]\n${content}`;
       const msg = event.message as unknown as Record<string, unknown>;
-      let newMessage: unknown;
+
+      let modifiedMsg: Record<string, unknown>;
       if (typeof msg.content === "string") {
-        newMessage = { ...msg, content: msg.content + suffix };
+        modifiedMsg = { ...msg, content: msg.content + appendix };
       } else if (Array.isArray(msg.content)) {
-        // Append a text block
-        newMessage = {
-          ...msg,
-          content: [...msg.content, { type: "text", text: suffix.trim() }],
-        };
+        const blocks = msg.content as Array<Record<string, unknown>>;
+        // Find last text block to append to, or add a new one
+        const lastTextIdx = blocks.reduce(
+          (acc, b, i) => (typeof b.text === "string" ? i : acc),
+          -1,
+        );
+        if (lastTextIdx >= 0) {
+          const updated = blocks.map((b, i) =>
+            i === lastTextIdx ? { ...b, text: String(b.text) + appendix } : b,
+          );
+          modifiedMsg = { ...msg, content: updated };
+        } else {
+          modifiedMsg = { ...msg, content: [...blocks, { type: "text", text: appendix }] };
+        }
       } else {
-        // Unknown shape — skip injection
-        return undefined;
+        return undefined; // Unknown message structure — skip injection
       }
 
       api.logger.info?.(
         `subdirectory-hints: injected context from ${found.filePath} (${content.length} chars)`,
       );
-      return { message: newMessage as import("@mariozechner/pi-agent-core").AgentMessage };
+      return { message: modifiedMsg as import("@mariozechner/pi-agent-core").AgentMessage };
     });
   },
 });

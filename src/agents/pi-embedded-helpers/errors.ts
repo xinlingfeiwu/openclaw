@@ -314,6 +314,9 @@ const TIMEOUT_ERROR_CODES = new Set([
   "ENETRESET",
   "EPIPE",
   "EAI_AGAIN",
+  // GitHub Copilot returns "terminated" as a bare stop code when generation is
+  // cut short (stream interruption, context overflow, or content policy).
+  "TERMINATED",
 ]);
 const AUTH_SCOPE_HINT_RE =
   /\b(?:missing|required|requires|insufficient)\s+(?:the\s+following\s+)?scopes?\b|\bmissing\s+scope\b/i;
@@ -817,6 +820,11 @@ function classifyFailoverClassificationFromMessage(
   if (isTimeoutErrorMessage(raw)) {
     return toReasonClassification("timeout");
   }
+  // GitHub Copilot returns the bare string "terminated" when generation stops
+  // unexpectedly. Classify as timeout so it's treated as retriable by failover logic.
+  if (/^terminated$/i.test(raw)) {
+    return toReasonClassification("timeout");
+  }
   // Provider-specific patterns as a final catch (Bedrock, Groq, Together AI, etc.)
   const providerSpecific = classifyProviderSpecificError(raw);
   if (providerSpecific) {
@@ -1092,6 +1100,17 @@ export function formatAssistantErrorText(
 
   if (isLikelyHttpErrorText(raw) || isRawApiErrorPayload(raw)) {
     return formatRawAssistantErrorForUi(raw);
+  }
+
+  // GitHub Copilot and some providers return the bare string "terminated" when the model
+  // stops generating (content policy, context overflow, or stream interruption). Surfacing
+  // "terminated" verbatim to end-users is confusing — translate it to an actionable message.
+  if (/^terminated$/i.test(raw)) {
+    return (
+      "The AI model stopped generating a response. " +
+      "This can happen when the conversation is too long or contains content that was flagged. " +
+      "Try /new to start a fresh session or /reset to compact the context."
+    );
   }
 
   // Never return raw unhandled errors - log for debugging but return safe message

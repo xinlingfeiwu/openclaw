@@ -161,9 +161,9 @@ export default definePluginEntry({
       if (remaining <= MIN_TRUNCATION_THRESHOLD) {
         // Aggregate budget exhausted: hard-limit to minimum
         const truncated = truncateOutput(text, MIN_TRUNCATION_THRESHOLD, headRatio);
-        const newMessage = replaceTextInMessage(event.message, truncated);
+        const newMessage = replaceTextInMessage(event.message, truncated) as typeof event.message;
         turnBudgetUsed.set(agentKey, used + MIN_TRUNCATION_THRESHOLD);
-        return { message: newMessage as AgentMessage };
+        return { message: newMessage };
       }
 
       // Layer 2: effective cap = min(perResultMax, remainingTurnBudget)

@@ -2,6 +2,16 @@
 
 Docs: https://docs.openclaw.ai
 
+## 2026.4.21
+
+### Changes
+
+- OpenAI/images: default OpenAI image generation to `gpt-image-2` while keeping `gpt-image-1` available by explicit model selection.
+
+### Fixes
+
+- Plugins/doctor: repair bundled plugin runtime dependencies from doctor paths so packaged installs can recover missing channel/provider dependencies without broad core dependency installs.
+
 ## 2026.4.20
 
 ### Changes

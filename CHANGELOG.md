@@ -11,6 +11,9 @@ Docs: https://docs.openclaw.ai
 ### Fixes
 
 - Plugins/doctor: repair bundled plugin runtime dependencies from doctor paths so packaged installs can recover missing channel/provider dependencies without broad core dependency installs.
+- npm/install: mirror the `node-domexception` alias into root `package.json` `overrides`, so npm installs stop surfacing the deprecated `google-auth-library -> gaxios -> node-fetch -> fetch-blob -> node-domexception` chain pulled through Pi/Google runtime deps. Thanks @vincentkoc.
+- Release checks: run packed bundled plugin postinstall repair during release validation so missing packaged runtime deps are caught before publish.
+- Discord/install: lazy-load Carbon UI runtime so npm installs do not need Discord UI dependencies until that surface is used.
 
 ## 2026.4.20
 

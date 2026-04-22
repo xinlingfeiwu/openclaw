@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, rmSync } from "node:fs";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 function makeFakeApi(pluginConfig?: Record<string, unknown>) {
   const handlers: Record<string, ((...args: unknown[]) => unknown)[]> = {};
@@ -29,14 +29,16 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  try { rmSync(tmpDir, { recursive: true }); } catch {}
+  try {
+    rmSync(tmpDir, { recursive: true });
+  } catch {}
 });
 
 async function loadPlugin(config?: Record<string, unknown>) {
   vi.resetModules();
   const mod = await import("./index.js");
   const api = makeFakeApi(config);
-  void mod.default.register(api as never);
+  mod.default.register(api as never);
   return api;
 }
 
@@ -67,7 +69,9 @@ describe("skill-security-scan plugin", () => {
       },
       {},
     );
-    expect(result[0]).toMatchObject({ requireApproval: { title: expect.stringContaining("Security") } });
+    expect(result[0]).toMatchObject({
+      requireApproval: { title: expect.stringContaining("Security") },
+    });
     expect(api.logger.warn).toHaveBeenCalled();
   });
 

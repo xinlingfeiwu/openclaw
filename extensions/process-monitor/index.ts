@@ -27,13 +27,10 @@ export default definePluginEntry({
     }
 
     const maxTracked =
-      typeof cfg.maxTracked === "number" && cfg.maxTracked > 0
-        ? cfg.maxTracked
-        : 20;
+      typeof cfg.maxTracked === "number" && cfg.maxTracked > 0 ? cfg.maxTracked : 20;
 
     const longRunningThreshold =
-      typeof cfg.longRunningThresholdMs === "number" &&
-      cfg.longRunningThresholdMs > 0
+      typeof cfg.longRunningThresholdMs === "number" && cfg.longRunningThresholdMs > 0
         ? cfg.longRunningThresholdMs
         : 5_000;
 
@@ -43,7 +40,7 @@ export default definePluginEntry({
 
     function extractCommand(params: Record<string, unknown>): string {
       const cmd = params.command ?? params.cmd ?? params.input ?? "";
-      return String(cmd).slice(0, 200);
+      return (cmd as string).slice(0, 200);
     }
 
     api.on("before_tool_call", (event, ctx) => {
@@ -113,9 +110,7 @@ export default definePluginEntry({
     });
 
     api.on("before_prompt_build", (_event, _ctx) => {
-      const longRunning = [...registry.values()].filter(
-        (r) => r.status === "long-running",
-      );
+      const longRunning = [...registry.values()].filter((r) => r.status === "long-running");
       if (longRunning.length === 0) {
         return undefined;
       }

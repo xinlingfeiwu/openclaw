@@ -1,11 +1,6 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 const DEFAULT_WATCH_TOOLS = new Set([
@@ -48,14 +43,13 @@ function readFileSafe(filePath: string): string | null {
 }
 
 function extractFilePath(params: Record<string, unknown>): string {
-  return String(params.path ?? params.file_path ?? params.filename ?? "").trim();
+  return ((params.path ?? params.file_path ?? params.filename ?? "") as string).trim();
 }
 
 export default definePluginEntry({
   id: "checkpoint-rollback",
   name: "Checkpoint & Rollback",
-  description:
-    "Saves file originals before destructive edits to ~/.openclaw/checkpoints/.",
+  description: "Saves file originals before destructive edits to ~/.openclaw/checkpoints/.",
   register(api: OpenClawPluginApi) {
     const cfg = (api.pluginConfig ?? {}) as CheckpointConfig;
     if (cfg.enabled === false) {
@@ -69,8 +63,7 @@ export default definePluginEntry({
     );
 
     const maxCheckpoints =
-      typeof cfg.maxCheckpointsPerSession === "number" &&
-      cfg.maxCheckpointsPerSession > 0
+      typeof cfg.maxCheckpointsPerSession === "number" && cfg.maxCheckpointsPerSession > 0
         ? cfg.maxCheckpointsPerSession
         : 50;
 

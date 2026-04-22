@@ -33,7 +33,7 @@ async function loadPlugin(config?: Record<string, unknown>) {
   const mod = await import("./index.js");
   const entry = mod.default;
   const api = makeFakeApi(config);
-  void entry.register(api as never);
+  entry.register(api as never);
   return api;
 }
 

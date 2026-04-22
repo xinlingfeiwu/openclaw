@@ -21,7 +21,7 @@ async function loadPlugin(config?: Record<string, unknown>) {
   vi.resetModules();
   const mod = await import("./index.js");
   const api = makeFakeApi(config);
-  void mod.default.register(api as never);
+  mod.default.register(api as never);
   return api;
 }
 

@@ -20,7 +20,7 @@ async function loadPlugin(config?: Record<string, unknown>) {
   vi.resetModules();
   const mod = await import("./index.js");
   const api = makeFakeApi(config);
-  void mod.default.register(api as never);
+  mod.default.register(api as never);
   return api;
 }
 
@@ -41,7 +41,11 @@ describe("context-fence plugin", () => {
 
   it("includes all marker types in guide", async () => {
     const api = await loadPlugin();
-    const result = await api._trigger("before_prompt_build", { prompt: "hi", messages: [] }, {}) as [{ appendSystemContext?: string }];
+    const result = (await api._trigger(
+      "before_prompt_build",
+      { prompt: "hi", messages: [] },
+      {},
+    )) as [{ appendSystemContext?: string }];
     expect(result[0]?.appendSystemContext).toContain("memory-context");
     expect(result[0]?.appendSystemContext).toContain("CONTEXT COMPACTION");
     expect(result[0]?.appendSystemContext).toContain("skill_auto_create");

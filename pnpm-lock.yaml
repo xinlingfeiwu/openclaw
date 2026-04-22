@@ -361,6 +361,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/channel-hints: {}
+
   extensions/checkpoint-rollback:
     devDependencies:
       openclaw:
@@ -408,6 +410,8 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/cron-silent-filter: {}
 
   extensions/deepgram:
     devDependencies:
@@ -556,6 +560,8 @@ importers:
       openclaw:
         specifier: workspace:*
         version: link:../..
+
+  extensions/file-safety-guard: {}
 
   extensions/firecrawl:
     dependencies:
@@ -1100,6 +1106,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/rate-limit-guard:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/runway:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -1127,6 +1139,8 @@ importers:
   extensions/skill-auto-create: {}
 
   extensions/skill-security-scan: {}
+
+  extensions/skill-yaml-validator: {}
 
   extensions/slack:
     dependencies:
@@ -1168,6 +1182,12 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/subdirectory-hints:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/synology-chat:
     dependencies:
@@ -1217,6 +1237,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/think-block-filter: {}
+
   extensions/tlon:
     dependencies:
       '@aws-sdk/client-s3':
@@ -1250,6 +1272,8 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/tool-output-truncation: {}
 
   extensions/twitch:
     dependencies:

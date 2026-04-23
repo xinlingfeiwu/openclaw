@@ -28,7 +28,12 @@ type ToolOutputTruncationConfig = {
   skipTools?: string[];
 };
 
-function truncateOutput(text: string, maxChars: number, headRatio: number): string {
+function truncateOutput(
+  text: string,
+  maxChars: number,
+  headRatio: number,
+  toolName?: string,
+): string {
   if (text.length <= maxChars) {
     return text;
   }
@@ -47,9 +52,10 @@ function truncateOutput(text: string, maxChars: number, headRatio: number): stri
     .slice(0, 80);
 
   const warningAttr = looksLikeJson ? ` warning="json_truncated_output_is_incomplete"` : "";
+  const toolAttr = toolName ? ` tool="${toolName}"` : "";
   return (
     text.slice(0, headChars) +
-    `\n\n<omitted chars="${omitted.toLocaleString()}" preview="${preview}..."${warningAttr} />\n\n` +
+    `\n\n<omitted chars="${omitted.toLocaleString()}" preview="${preview}..."${warningAttr}${toolAttr} />\n\n` +
     text.slice(text.length - tailChars)
   );
 }
@@ -164,7 +170,7 @@ export default definePluginEntry({
 
       if (remaining <= MIN_TRUNCATION_THRESHOLD) {
         // Aggregate budget exhausted: hard-limit to minimum
-        const truncated = truncateOutput(text, MIN_TRUNCATION_THRESHOLD, headRatio);
+        const truncated = truncateOutput(text, MIN_TRUNCATION_THRESHOLD, headRatio, toolName);
         const newMessage = replaceTextInMessage(event.message, truncated) as typeof event.message;
         turnBudgetUsed.set(agentKey, used + MIN_TRUNCATION_THRESHOLD);
         return { message: newMessage };
@@ -179,7 +185,7 @@ export default definePluginEntry({
         return undefined;
       }
 
-      const truncated = truncateOutput(text, effectiveMax, headRatio);
+      const truncated = truncateOutput(text, effectiveMax, headRatio, toolName);
       const newMessage2 = replaceTextInMessage(event.message, truncated);
       turnBudgetUsed.set(agentKey, used + effectiveMax);
       return { message: newMessage2 as AgentMessage };

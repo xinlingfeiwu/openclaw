@@ -71,6 +71,7 @@ type SessionStat = {
   sessionId: string;
   toolCalls: ToolCallStat[];
   tokenUsage: TokenUsageStat[];
+  apiCallCount: number;
   startTs: number;
   endTs?: number;
 };
@@ -139,7 +140,7 @@ export default definePluginEntry({
     function getOrCreateSession(sessionId: string): SessionStat {
       let s = sessionBuffers.get(sessionId);
       if (!s) {
-        s = { sessionId, toolCalls: [], tokenUsage: [], startTs: Date.now() };
+        s = { sessionId, toolCalls: [], tokenUsage: [], apiCallCount: 0, startTs: Date.now() };
         sessionBuffers.set(sessionId, s);
       }
       return s;
@@ -188,6 +189,7 @@ export default definePluginEntry({
         ts: Date.now(),
       };
       getOrCreateSession(sessionId).tokenUsage.push(stat);
+      getOrCreateSession(sessionId).apiCallCount++;
       api.logger.info?.(
         `insights-tracker: ${stat.provider}/${stat.model} — in=${stat.inputTokens} out=${stat.outputTokens} ` +
           `cacheR=${stat.cacheReadTokens} cacheW=${stat.cacheWriteTokens}`,
@@ -220,7 +222,7 @@ export default definePluginEntry({
         const estimatedUsd = session.tokenUsage.reduce((sum, t) => sum + estimateCostUsd(t), 0);
         api.logger.info?.(
           `insights-tracker: saved stats for session ${sessionId} ` +
-            `(${session.toolCalls.length} tool calls, tokens in=${totalIn} out=${totalOut}, ~$${estimatedUsd.toFixed(4)} USD)`,
+            `(${session.toolCalls.length} tool calls, ${session.apiCallCount} LLM calls, tokens in=${totalIn} out=${totalOut}, ~$${estimatedUsd.toFixed(4)} USD)`,
         );
       } catch (e) {
         api.logger.warn?.(`insights-tracker: failed to save stats: ${String(e)}`);

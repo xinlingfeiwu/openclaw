@@ -252,6 +252,16 @@ export default definePluginEntry({
       }
     });
 
+    // Clean up all active subagent monitors when the parent session ends.
+    // Handles abnormal session termination where subagent_ended may not fire.
+    api.on("agent_end", (_event, _ctx) => {
+      for (const [, monitor] of activeSubagents) {
+        clearTimeout(monitor.hardTimeoutHandle);
+        clearInterval(monitor.heartbeatHandle);
+      }
+      activeSubagents.clear();
+    });
+
     // Update last activity time on llm_output for stale detection
     api.on("llm_output", (event, ctx) => {
       const sessionId = (ctx as { sessionId?: string }).sessionId ?? "";

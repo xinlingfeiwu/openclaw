@@ -42,7 +42,7 @@ describe("tool-output-truncation plugin", () => {
     expect(result[0]).toBeUndefined();
   });
 
-  it("truncates large outputs and inserts omitted marker", async () => {
+  it("truncates large outputs and inserts omitted marker with tool attribute", async () => {
     const api = await loadPlugin({ maxChars: 50_000 });
     await api._trigger("before_model_resolve", {}, { agentId: "a2" });
     const result = (await api._trigger("tool_result_persist", makeToolResultEvent(BIG_TEXT), {
@@ -50,6 +50,7 @@ describe("tool-output-truncation plugin", () => {
     })) as [{ message: { content: string } }];
     const content = result[0]?.message?.content ?? "";
     expect(content).toContain("<omitted");
+    expect(content).toContain('tool="bash"');
     expect(content.length).toBeLessThan(BIG_TEXT.length);
   });
 

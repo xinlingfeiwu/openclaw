@@ -84,4 +84,35 @@ describe("smart-approvals plugin", () => {
     );
     expect(result).toHaveLength(0);
   });
+
+  it("agent_end clears active subagent timers without errors", async () => {
+    vi.useFakeTimers();
+    const api = await loadPlugin({
+      patternsFile,
+      delegationTimeoutSeconds: 10,
+      heartbeatIntervalSeconds: 2,
+      staleThresholdCycles: 2,
+    });
+
+    // Spawn a subagent to register timers
+    await api._trigger(
+      "subagent_spawned",
+      { childSessionKey: "sub-001", agentId: "worker", label: "test-worker" },
+      {},
+    );
+
+    // End the parent session before the subagent ends
+    await api._trigger("agent_end", {}, { agentId: "parent" });
+
+    // Advance time well past the stale + hard-timeout threshold
+    vi.advanceTimersByTime(30_000);
+
+    // Stale warning should NOT have been called (timer was cleared)
+    const warnCalls = (api.logger.warn as ReturnType<typeof vi.fn>).mock.calls.filter((c) =>
+      String(c[0]).includes("stale"),
+    );
+    expect(warnCalls).toHaveLength(0);
+
+    vi.useRealTimers();
+  });
 });

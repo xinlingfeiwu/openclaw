@@ -154,6 +154,7 @@ export default definePluginEntry({
     // Per-provider health tracking (session-scoped, no persistence needed)
     const health = new Map<string, ProviderHealth>();
     let fallbackActive = false;
+    let probingPrimary = false; // true during probe window after time-based reset
     let fallbackActivatedAt: number | undefined;
     let currentPrimary: string | undefined;
 
@@ -205,6 +206,7 @@ export default definePluginEntry({
 
       if (!fallbackActive && provider === currentPrimary && rate > failThreshold) {
         fallbackActive = true;
+        probingPrimary = false; // abort any probe in progress
         fallbackActivatedAt = Date.now();
         const cat = classification?.category ?? "unknown";
         api.logger.warn?.(
@@ -213,36 +215,38 @@ export default definePluginEntry({
         );
       }
 
-      // Recovery check: if we're in fallback but primary is recovering
-      if (fallbackActive && provider === currentPrimary && !isError) {
+      // Probe recovery: when probing primary after time-based reset, track consecutive
+      // successes. N successes confirms recovery; a failure reactivates fallback (handled
+      // above by the rate-threshold check + probingPrimary = false guard).
+      if (probingPrimary && provider === currentPrimary && !isError) {
         h.consecutiveSuccessesInFallback++;
         if (h.consecutiveSuccessesInFallback >= recoveryCount) {
-          fallbackActive = false;
+          probingPrimary = false;
           h.consecutiveSuccessesInFallback = 0;
           api.logger.info?.(
-            `smart-provider-fallback: ${provider} recovered after ${recoveryCount} successes. Restoring primary.`,
+            `smart-provider-fallback: ${provider} confirmed healthy after ${recoveryCount} consecutive successes. Probe complete.`,
           );
         }
-      } else if (fallbackActive && provider === currentPrimary && isError) {
-        h.consecutiveSuccessesInFallback = 0;
       }
     });
 
     api.on("before_model_resolve", (_event, _ctx) => {
       if (!fallbackActive) {
-        return undefined;
+        return undefined; // normal operation or probing (probingPrimary=true, fallbackActive=false)
       }
-      // Time-based recovery: after recoveryIntervalMs, let one request through to the
-      // primary. If it succeeds consecutively (recoveryCount times), fallback deactivates.
+      // Time-based recovery: after recoveryIntervalMs, start probing the primary.
+      // Probe lets one request through; after recoveryCount consecutive successes,
+      // primary is confirmed healthy (tracked in llm_output above).
       if (
         fallbackActivatedAt !== undefined &&
         Date.now() - fallbackActivatedAt >= recoveryIntervalMs
       ) {
         api.logger.info?.(
           `smart-provider-fallback: recovery window elapsed (${recoveryIntervalMs / 1000}s). ` +
-            `Probing primary ${currentPrimary} — fallback will reactivate if it fails again.`,
+            `Probing primary ${currentPrimary} — fallback reactivates immediately on failure.`,
         );
         fallbackActive = false;
+        probingPrimary = true;
         fallbackActivatedAt = undefined;
         const h = currentPrimary ? health.get(currentPrimary) : undefined;
         if (h) {

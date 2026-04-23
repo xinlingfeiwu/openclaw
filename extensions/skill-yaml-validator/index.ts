@@ -75,8 +75,7 @@ function validateSkillContent(content: string, filePath: string): string | null 
   // Find if there's a non-root subdir involved
   for (const seg of skillPathSegments.slice(-3, -1)) {
     if (seg && !ALLOWED_SUBDIRS.has(seg) && seg !== "skills" && !seg.startsWith(".")) {
-      // Only reject if it looks like an unsupported subdir
-      break;
+      return `Skill file is in unsupported subdirectory "${seg}". Allowed subdirectories: ${[...ALLOWED_SUBDIRS].join(", ")}.`;
     }
   }
 

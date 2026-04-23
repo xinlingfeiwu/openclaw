@@ -33,6 +33,9 @@ function truncateOutput(text: string, maxChars: number, headRatio: number): stri
     return text;
   }
 
+  // Detect JSON content to warn agent not to parse truncated output as JSON.
+  const looksLikeJson = /^\s*[{[]/.test(text);
+
   const headChars = Math.floor(maxChars * headRatio);
   const tailChars = maxChars - headChars;
   const omitted = text.length - headChars - tailChars;
@@ -43,9 +46,10 @@ function truncateOutput(text: string, maxChars: number, headRatio: number): stri
     .trim()
     .slice(0, 80);
 
+  const warningAttr = looksLikeJson ? ` warning="json_truncated_output_is_incomplete"` : "";
   return (
     text.slice(0, headChars) +
-    `\n\n<omitted chars="${omitted.toLocaleString()}" preview="${preview}..." />\n\n` +
+    `\n\n<omitted chars="${omitted.toLocaleString()}" preview="${preview}..."${warningAttr} />\n\n` +
     text.slice(text.length - tailChars)
   );
 }

@@ -6,6 +6,9 @@ const DEFAULT_MIN_MESSAGES = 10;
 // Structured 13-section compaction template guidance (ported from hermes context_compressor.py).
 // Injected via appendSystemContext so the agent and compaction LLM receive consistent guidance.
 const COMPACTION_TEMPLATE_GUIDANCE = `
+CRITICAL RULE: The text of the LAST USER MESSAGE must be preserved VERBATIM in the Active Task
+section. Never omit, paraphrase, or summarize it — it represents the user's current active request.
+
 When compressing or summarizing conversation context, use this structured 13-section template:
 
 ## Active Task

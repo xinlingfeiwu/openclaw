@@ -26,6 +26,8 @@ type ErrorCategory =
   | "context_overflow" // context window exceeded — need compaction, not fallback
   | "payload_too_large" // 413 payload too large — need compression
   | "thinking_sig" // Claude thinking signature mismatch — retryable
+  | "model_not_found" // 404 / invalid model — fallback to different model/provider
+  | "server_error" // 500/502 server error — temporary, use fallback
   | "unknown"; // unclassified — default to fallback
 
 type ErrorClassification = {
@@ -62,6 +64,16 @@ function classifyError(errorMsg: string): ErrorClassification {
   }
   if (/thinking.*signature|signature.*mismatch/.test(msg)) {
     return { category: "thinking_sig", shouldFallback: false };
+  }
+  if (
+    /model not found|invalid model|model_not_found|not a valid model|does not exist|no such model|unknown model|unsupported model/.test(
+      msg,
+    )
+  ) {
+    return { category: "model_not_found", shouldFallback: true };
+  }
+  if (/internal server error|bad gateway|server error|upstream error|\b500\b|\b502\b/.test(msg)) {
+    return { category: "server_error", shouldFallback: true };
   }
   if (/timeout|timed.*out/.test(msg)) {
     return { category: "timeout", shouldFallback: true };

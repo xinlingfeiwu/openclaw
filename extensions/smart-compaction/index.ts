@@ -136,5 +136,14 @@ export default definePluginEntry({
 
       return undefined;
     });
+
+    // Clean up per-session state when session ends to prevent unbounded map growth.
+    api.on("agent_end", (_event, ctx) => {
+      const key =
+        (ctx as { sessionId?: string }).sessionId ??
+        (ctx as { agentId?: string }).agentId ??
+        "default";
+      sessionState.delete(key);
+    });
   },
 });

@@ -256,7 +256,7 @@ export default definePluginEntry({
     api.on("llm_output", (event, ctx) => {
       const sessionId = (ctx as { sessionId?: string }).sessionId ?? "";
       for (const [key, monitor] of activeSubagents) {
-        if (key === sessionId || key.startsWith(sessionId)) {
+        if (key === sessionId) {
           monitor.lastActivityAt = Date.now();
           monitor.staleCount = 0;
           break;

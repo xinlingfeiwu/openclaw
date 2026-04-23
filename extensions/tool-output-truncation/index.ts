@@ -180,5 +180,11 @@ export default definePluginEntry({
       turnBudgetUsed.set(agentKey, used + effectiveMax);
       return { message: newMessage2 as AgentMessage };
     });
+
+    // Clean up per-turn budget entry when session ends to prevent unbounded map growth.
+    api.on("agent_end", (_event, ctx) => {
+      const key = ctx.agentId ?? ctx.sessionId ?? "default";
+      turnBudgetUsed.delete(key);
+    });
   },
 });

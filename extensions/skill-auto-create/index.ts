@@ -89,7 +89,14 @@ export default definePluginEntry({
 
     // Inject skill creation prompt when threshold is met
     api.on("before_prompt_build", async (event, ctx) => {
-      const sessionId = ctx.sessionId ?? ctx.agentId ?? "default";
+      // before_prompt_build ctx provides conversationId; after_tool_call provides sessionId.
+      // In production these are the same value — check both so tests and runtime align.
+      const ctx_ = ctx as Record<string, unknown>;
+      const sessionId =
+        (ctx_.sessionId as string | undefined) ??
+        (ctx_.agentId as string | undefined) ??
+        (ctx_.conversationId as string | undefined) ??
+        "default";
       const state = getSessionState(sessionId);
 
       if (state.toolCallCount < threshold) {
@@ -106,6 +113,12 @@ export default definePluginEntry({
       );
 
       return { prependContext: SKILL_CREATION_PROMPT };
+    });
+
+    // Clean up per-session state when session ends to prevent unbounded map growth.
+    api.on("agent_end", (_event, ctx) => {
+      const sessionId = ctx.sessionId ?? ctx.agentId ?? "default";
+      sessionState.delete(sessionId);
     });
   },
 });

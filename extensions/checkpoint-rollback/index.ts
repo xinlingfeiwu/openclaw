@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { expandHomePrefix } from "openclaw/plugin-sdk/infra-runtime";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
@@ -122,14 +122,10 @@ export default definePluginEntry({
       try {
         // Save original file content
         writeFileSync(checkpointFile, original);
-        // Save manifest entry alongside
+        // Append manifest entry (avoids O(n) read+rewrite per checkpoint)
         const manifestPath = join(sessionDir, "manifest.jsonl");
         const { originalContent: _, ...manifestEntry } = entry;
-        writeFileSync(
-          manifestPath,
-          readFileSafe(manifestPath)?.concat(JSON.stringify(manifestEntry) + "\n") ??
-            JSON.stringify(manifestEntry) + "\n",
-        );
+        appendFileSync(manifestPath, JSON.stringify(manifestEntry) + "\n");
         api.logger.info?.(
           `checkpoint-rollback: saved checkpoint for "${basename(absPath)}" → ${checkpointFile}`,
         );
@@ -138,6 +134,12 @@ export default definePluginEntry({
       }
 
       return undefined; // Don't block the tool call
+    });
+
+    // Clean up per-session counter when session ends to prevent unbounded map growth.
+    api.on("agent_end", (_event, ctx) => {
+      const sessionId = ctx.sessionId ?? ctx.agentId ?? "default";
+      sessionCounters.delete(sessionId);
     });
   },
 });

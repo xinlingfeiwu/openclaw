@@ -160,7 +160,10 @@ export default definePluginEntry({
     }
     if (Array.isArray(cfg.additionalDeniedPrefixes)) {
       for (const p of cfg.additionalDeniedPrefixes) {
-        WRITE_DENIED_PREFIXES.push(expandHomePrefix(p));
+        const expanded = expandHomePrefix(p);
+        if (!WRITE_DENIED_PREFIXES.includes(expanded)) {
+          WRITE_DENIED_PREFIXES.push(expanded);
+        }
       }
     }
 

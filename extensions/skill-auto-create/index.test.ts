@@ -59,7 +59,7 @@ describe("skill-auto-create plugin", () => {
       { conversationId: "s2" },
     );
     expect(result[0]).toMatchObject({
-      prependContext: expect.stringContaining("skill_auto_create"),
+      prependContext: expect.stringContaining("skill_review"),
     });
   });
 
@@ -143,7 +143,7 @@ describe("skill-auto-create plugin", () => {
       { conversationId: "s6" },
     );
     expect(result[0]).toMatchObject({
-      prependContext: expect.stringContaining("skill_auto_create"),
+      prependContext: expect.stringContaining("skill_review"),
     });
   });
 });

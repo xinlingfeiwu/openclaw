@@ -143,14 +143,20 @@ export default definePluginEntry({
           (normalizeOptionalLowercaseString(modelId) ?? "") as never,
         ),
       prepareRuntimeAuth: async (ctx) => {
-        const { resolveCopilotApiToken } = await loadGithubCopilotRuntime();
+        const { resolveCopilotApiToken, DEFAULT_COPILOT_API_BASE_URL } =
+          await loadGithubCopilotRuntime();
         const token = await resolveCopilotApiToken({
           githubToken: ctx.apiKey,
           env: ctx.env,
         });
+        // Claude models require the public API endpoint (api.individual.githubcopilot.com)
+        // because the proxy endpoint (proxy-ep from the token) does not expose /v1/messages.
+        const isClaudeModel = (normalizeOptionalLowercaseString(ctx.modelId) ?? "").includes(
+          "claude",
+        );
         return {
           apiKey: token.token,
-          baseUrl: token.baseUrl,
+          baseUrl: isClaudeModel ? DEFAULT_COPILOT_API_BASE_URL : token.baseUrl,
           expiresAt: token.expiresAt,
         };
       },

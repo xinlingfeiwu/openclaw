@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
+import { expandHomePrefix } from "openclaw/plugin-sdk/infra-runtime";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 // USD per 1M tokens — rough defaults; overridable per provider in config
@@ -19,6 +19,8 @@ type DailyEntry = {
   cacheWriteTokens: number;
   estimatedUsd: number;
   calls: number;
+  /** Number of real LLM API calls (≫ session count; 10-90x per session typically) */
+  apiCallCount: number;
 };
 
 type UsageData = {
@@ -39,13 +41,6 @@ type UsageTrackerConfig = {
   /** Custom pricing overrides: key is "provider/model", value is { input, output, cacheRead } USD per 1M tokens */
   pricing?: Record<string, { input: number; output: number; cacheRead?: number }>;
 };
-
-function expandHome(p: string): string {
-  if (p.startsWith("~/")) {
-    return join(homedir(), p.slice(2));
-  }
-  return p;
-}
 
 function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
@@ -118,7 +113,7 @@ export default definePluginEntry({
       return;
     }
 
-    const usageFile = expandHome(
+    const usageFile = expandHomePrefix(
       typeof cfg.usageFile === "string" && cfg.usageFile.trim()
         ? cfg.usageFile
         : "~/.openclaw/usage-tracker.json",
@@ -144,6 +139,8 @@ export default definePluginEntry({
 
     // Track whether we're in fallback mode for this gateway session
     let fallbackActive = false;
+    // Track which date fallback was activated so we can reset it on a new day
+    let fallbackActivatedDate: string | undefined;
 
     api.on("llm_output", (event, _ctx) => {
       const ev = event as {
@@ -166,6 +163,14 @@ export default definePluginEntry({
       const cacheWrite = usage.cacheWrite ?? 0;
 
       const today = todayKey();
+
+      // Reset fallback on a new calendar day so daily limits are re-evaluated fresh
+      if (fallbackActive && fallbackActivatedDate && fallbackActivatedDate !== today) {
+        fallbackActive = false;
+        fallbackActivatedDate = undefined;
+        api.logger.info?.(`usage-tracker: new day ${today} — resetting fallback mode`);
+      }
+
       const key = entryKey(today, provider, model);
 
       try {
@@ -179,6 +184,7 @@ export default definePluginEntry({
           cacheWriteTokens: 0,
           estimatedUsd: 0,
           calls: 0,
+          apiCallCount: 0,
         };
 
         existing.inputTokens += input;
@@ -194,19 +200,21 @@ export default definePluginEntry({
           customPricing,
         );
         existing.calls += 1;
+        existing.apiCallCount = (existing.apiCallCount ?? 0) + 1;
 
         data.entries[key] = existing;
         saveUsage(usageFile, data);
 
         api.logger.info?.(
           `usage-tracker: ${provider}/${model} today: in=${existing.inputTokens} out=${existing.outputTokens} ` +
-            `cacheR=${existing.cacheReadTokens} ~$${existing.estimatedUsd.toFixed(4)}`,
+            `cacheR=${existing.cacheReadTokens} apiCalls=${existing.apiCallCount} ~$${existing.estimatedUsd.toFixed(4)}`,
         );
 
         // Check if we should activate fallback
         if (dailyLimit > 0 && !fallbackActive && existing.inputTokens > dailyLimit) {
           if (fallbackProvider) {
             fallbackActive = true;
+            fallbackActivatedDate = today;
             api.logger.warn?.(
               `usage-tracker: daily input token limit ${dailyLimit} exceeded for ${provider}/${model} ` +
                 `(used: ${existing.inputTokens}). Switching to fallback: ${fallbackProvider}`,

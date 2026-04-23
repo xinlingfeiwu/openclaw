@@ -59,7 +59,7 @@ describe("memory-nudge plugin", () => {
       { prompt: "hello", messages: makeMessages(5) },
       ctx,
     );
-    expect(result[0]).toMatchObject({ prependContext: expect.stringContaining("memory_nudge") });
+    expect(result[0]).toMatchObject({ prependContext: expect.stringContaining("memory_review") });
   });
 
   it("does not double-nudge at the same turn count", async () => {

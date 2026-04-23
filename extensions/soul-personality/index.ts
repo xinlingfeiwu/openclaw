@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { expandHomePrefix } from "openclaw/plugin-sdk/infra-runtime";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 // Invisible Unicode characters used in prompt injection — matches hermes _CONTEXT_INVISIBLE_CHARS
@@ -44,13 +43,6 @@ function loadSoulFile(filePath: string): string | null {
   }
 }
 
-function expandHome(p: string): string {
-  if (p.startsWith("~/")) {
-    return join(homedir(), p.slice(2));
-  }
-  return p;
-}
-
 function detectInjection(text: string): string | null {
   // Check invisible Unicode first (zero-width joiners, BOM, RTL overrides)
   if (INVISIBLE_UNICODE_REGEX.test(text)) {
@@ -75,7 +67,7 @@ export default definePluginEntry({
       return;
     }
 
-    const soulPath = expandHome(
+    const soulPath = expandHomePrefix(
       typeof cfg.soulFile === "string" && cfg.soulFile.trim()
         ? cfg.soulFile
         : "~/.openclaw/SOUL.md",

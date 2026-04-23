@@ -11,7 +11,63 @@ type SmartProviderFallbackConfig = {
   fallbackModel?: string;
   /** How many consecutive successes before deactivating fallback. Default: 3 */
   recoverySuccessCount?: number;
+  /** Seconds to stay in fallback before probing primary again. Default: 300 */
+  recoveryIntervalSeconds?: number;
 };
+
+// Error categories ported from hermes error taxonomy (errors.py).
+type ErrorCategory =
+  | "auth" // 401 invalid key — check credentials
+  | "auth_permanent" // account disabled/suspended — provider-level block
+  | "billing" // 402 payment required — rotate provider
+  | "rate_limit" // 429 too many requests — temporary, use fallback
+  | "overloaded" // 503 service overloaded — temporary, use fallback
+  | "timeout" // request timeout — retryable, use fallback
+  | "context_overflow" // context window exceeded — need compaction, not fallback
+  | "payload_too_large" // 413 payload too large — need compression
+  | "thinking_sig" // Claude thinking signature mismatch — retryable
+  | "unknown"; // unclassified — default to fallback
+
+type ErrorClassification = {
+  category: ErrorCategory;
+  shouldFallback: boolean;
+};
+
+function classifyError(errorMsg: string): ErrorClassification {
+  const msg = errorMsg.toLowerCase();
+  if (/disabled|suspended|banned|terminated|deactivated/.test(msg)) {
+    return { category: "auth_permanent", shouldFallback: false };
+  }
+  if (
+    /invalid.*api.*key|api.*key.*invalid|authentication.*failed|unauthorized|invalid.*token/.test(
+      msg,
+    )
+  ) {
+    return { category: "auth", shouldFallback: false };
+  }
+  if (/payment.*required|billing|quota.*exceeded|insufficient.*credits|402/.test(msg)) {
+    return { category: "billing", shouldFallback: true };
+  }
+  if (/rate.*limit|too.*many.*requests|throttle|429/.test(msg)) {
+    return { category: "rate_limit", shouldFallback: true };
+  }
+  if (/overload|service.*unavailable|capacity|503/.test(msg)) {
+    return { category: "overloaded", shouldFallback: true };
+  }
+  if (/context.*length|maximum.*context|token.*limit|too.*long|context.*window/.test(msg)) {
+    return { category: "context_overflow", shouldFallback: false };
+  }
+  if (/payload.*too.*large|request.*too.*large|413/.test(msg)) {
+    return { category: "payload_too_large", shouldFallback: false };
+  }
+  if (/thinking.*signature|signature.*mismatch/.test(msg)) {
+    return { category: "thinking_sig", shouldFallback: false };
+  }
+  if (/timeout|timed.*out/.test(msg)) {
+    return { category: "timeout", shouldFallback: true };
+  }
+  return { category: "unknown", shouldFallback: true };
+}
 
 type ProviderHealth = {
   // circular buffer of results: true=success, false=failure
@@ -86,7 +142,16 @@ export default definePluginEntry({
     // Per-provider health tracking (session-scoped, no persistence needed)
     const health = new Map<string, ProviderHealth>();
     let fallbackActive = false;
+    let fallbackActivatedAt: number | undefined;
     let currentPrimary: string | undefined;
+
+    // How long to stay in fallback before attempting primary recovery (ms).
+    // After this window, one request is allowed through to the primary; if it
+    // succeeds consecutively (recoveryCount times) fallback deactivates.
+    const recoveryIntervalMs =
+      typeof cfg.recoveryIntervalSeconds === "number" && cfg.recoveryIntervalSeconds > 0
+        ? cfg.recoveryIntervalSeconds * 1000
+        : 5 * 60 * 1000; // 5 minutes default
 
     api.on("llm_output", (event, _ctx) => {
       const ev = event as {
@@ -96,7 +161,23 @@ export default definePluginEntry({
         error?: string;
       };
       const provider = ev.provider ?? "unknown";
-      const isError = Boolean(ev.error);
+      const errorMsg = ev.error ?? "";
+      const isError = Boolean(errorMsg);
+
+      // Classify the error to decide whether this failure should count against the provider.
+      // auth/auth_permanent/context_overflow/payload_too_large errors are not provider health
+      // issues — don't activate fallback for them.
+      let classification: ErrorClassification | undefined;
+      if (isError) {
+        classification = classifyError(errorMsg);
+        if (!classification.shouldFallback) {
+          api.logger.info?.(
+            `smart-provider-fallback: ${provider} error classified as "${classification.category}" — ` +
+              `not counting against health ring (fallback not appropriate)`,
+          );
+          return;
+        }
+      }
 
       if (!health.has(provider)) {
         health.set(provider, createHealth(ringSize));
@@ -112,9 +193,11 @@ export default definePluginEntry({
 
       if (!fallbackActive && provider === currentPrimary && rate > failThreshold) {
         fallbackActive = true;
+        fallbackActivatedAt = Date.now();
+        const cat = classification?.category ?? "unknown";
         api.logger.warn?.(
           `smart-provider-fallback: ${provider} failure rate ${(rate * 100).toFixed(0)}% > threshold ` +
-            `${(failThreshold * 100).toFixed(0)}%. Activating fallback: ${fallbackProvider}`,
+            `${(failThreshold * 100).toFixed(0)}% (last error: ${cat}). Activating fallback: ${fallbackProvider}`,
         );
       }
 
@@ -135,6 +218,24 @@ export default definePluginEntry({
 
     api.on("before_model_resolve", (_event, _ctx) => {
       if (!fallbackActive) {
+        return undefined;
+      }
+      // Time-based recovery: after recoveryIntervalMs, let one request through to the
+      // primary. If it succeeds consecutively (recoveryCount times), fallback deactivates.
+      if (
+        fallbackActivatedAt !== undefined &&
+        Date.now() - fallbackActivatedAt >= recoveryIntervalMs
+      ) {
+        api.logger.info?.(
+          `smart-provider-fallback: recovery window elapsed (${recoveryIntervalMs / 1000}s). ` +
+            `Probing primary ${currentPrimary} — fallback will reactivate if it fails again.`,
+        );
+        fallbackActive = false;
+        fallbackActivatedAt = undefined;
+        const h = currentPrimary ? health.get(currentPrimary) : undefined;
+        if (h) {
+          h.consecutiveSuccessesInFallback = 0;
+        }
         return undefined;
       }
       return {

@@ -25,6 +25,15 @@ type TodoManagerConfig = {
 // Per-session todo stores (session-scoped, survives compaction via context injection)
 const sessionStores = new Map<string, TodoStore>();
 
+// Registry populated from before_prompt_build (has ctx.sessionId) so the tool
+// execute callback (which only receives toolCallId) can resolve the correct key.
+// Key: first 3 hyphen-segments of the session ID; Value: full session ID.
+const sessionPrefixRegistry = new Map<string, string>();
+
+function sessionPrefix(id: string): string {
+  return id.includes("-") ? id.split("-").slice(0, 3).join("-") : id;
+}
+
 function getStore(sessionId: string): TodoStore {
   let store = sessionStores.get(sessionId);
   if (!store) {
@@ -97,8 +106,11 @@ export default definePluginEntry({
           ),
         }),
         async execute(toolCallId, params, _signal) {
-          // Use the toolCallId prefix as a per-session key (stable across compaction)
-          const sessionId = toolCallId.split("-").slice(0, 3).join("-") || "default";
+          // Resolve the session via the registry (populated by before_prompt_build).
+          // The registry maps a short prefix of the session UUID to the full session ID,
+          // so this lookup is stable even when toolCallId embeds only a prefix.
+          const prefix = sessionPrefix(toolCallId);
+          const sessionId = sessionPrefixRegistry.get(prefix) ?? prefix ?? "default";
           const p = params as {
             action: "add" | "update" | "list" | "clear_done";
             content?: string;
@@ -215,6 +227,8 @@ export default definePluginEntry({
     if (injectIntoContext) {
       api.on("before_prompt_build", (_event, ctx) => {
         const sessionId = ctx.sessionId ?? ctx.agentId ?? "default";
+        // Keep the registry in sync so tool execute can resolve the full session ID.
+        sessionPrefixRegistry.set(sessionPrefix(sessionId), sessionId);
         const store = sessionStores.get(sessionId);
         if (!store || store.items.length === 0) {
           return undefined;

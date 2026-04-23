@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
+import { expandHomePrefix } from "openclaw/plugin-sdk/infra-runtime";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 const DEFAULT_WATCH_TOOLS = new Set([
@@ -27,13 +27,6 @@ type CheckpointEntry = {
   checkpointFile: string;
 };
 
-function expandHome(p: string): string {
-  if (p.startsWith("~/")) {
-    return join(homedir(), p.slice(2));
-  }
-  return p;
-}
-
 function readFileSafe(filePath: string): string | null {
   try {
     return readFileSync(filePath, "utf-8");
@@ -56,7 +49,7 @@ export default definePluginEntry({
       return;
     }
 
-    const checkpointsDir = expandHome(
+    const checkpointsDir = expandHomePrefix(
       typeof cfg.checkpointsDir === "string" && cfg.checkpointsDir.trim()
         ? cfg.checkpointsDir
         : "~/.openclaw/checkpoints",

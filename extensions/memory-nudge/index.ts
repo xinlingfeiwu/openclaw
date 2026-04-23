@@ -18,16 +18,18 @@ type MemoryNudgeConfig = {
   nudgeText?: string;
 };
 
-// Per-session tracking: sessionId → { userTurnCount, nudgeCount, lastNudgedAt }
+// Per-session tracking: sessionId → { userTurnCount, nudgeCount, lastNudgedAt, lastCountedUserMsgs }
+// userTurnCount accumulates as a running total; lastCountedUserMsgs tracks the previous window size
+// so we can compute deltas correctly even after context compaction truncates message history.
 const sessionState = new Map<
   string,
-  { userTurnCount: number; nudgeCount: number; lastNudgedAt: number }
+  { userTurnCount: number; nudgeCount: number; lastNudgedAt: number; lastCountedUserMsgs: number }
 >();
 
 function getSessionState(sessionId: string) {
   let state = sessionState.get(sessionId);
   if (!state) {
-    state = { userTurnCount: 0, nudgeCount: 0, lastNudgedAt: 0 };
+    state = { userTurnCount: 0, nudgeCount: 0, lastNudgedAt: 0, lastCountedUserMsgs: 0 };
     sessionState.set(sessionId, state);
   }
   return state;
@@ -73,9 +75,13 @@ export default definePluginEntry({
       const sessionId = ctx.sessionId ?? ctx.agentId ?? "default";
       const state = getSessionState(sessionId);
 
-      // Update user turn count from current messages
+      // Accumulate user turn count by delta only — never overwrite.
+      // After context compaction the message list may shrink; using max(0, delta)
+      // prevents the counter from going backwards.
       const currentUserMsgCount = countUserMessages(event.messages);
-      state.userTurnCount = currentUserMsgCount;
+      const delta = Math.max(0, currentUserMsgCount - state.lastCountedUserMsgs);
+      state.userTurnCount += delta;
+      state.lastCountedUserMsgs = currentUserMsgCount;
 
       // Check if we should nudge: at interval boundaries only
       if (state.userTurnCount === 0 || state.userTurnCount % interval !== 0) {

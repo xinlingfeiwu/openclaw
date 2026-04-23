@@ -108,6 +108,8 @@ asking them to repeat themselves.`;
 // Aligned with hermes TOOL_USE_ENFORCEMENT_MODELS.
 const GPT_MODEL_PATTERNS = ["gpt", "codex", "copilot", "o1", "o3", "o4", "grok", "deepseek"];
 const GEMINI_MODEL_PATTERNS = ["gemini", "gemma"];
+// Claude models have strong built-in tool-use discipline; skip OpenAI-specific XML directives.
+const CLAUDE_MODEL_PATTERNS = ["claude", "anthropic"];
 
 type ModelGuidanceConfig = {
   enabled?: boolean;
@@ -149,18 +151,21 @@ export default definePluginEntry({
       }
 
       // Model-specific execution discipline.
-      // "auto" mode falls through to GPT guidance (safe default for gpt-5.4 users).
+      // "auto" defaults to GPT guidance — safe default since most users run gpt-5.4.
+      // Claude has strong built-in discipline; only inject universal guidance for it.
       const isGpt = family === "auto" || GPT_MODEL_PATTERNS.some((p) => family.includes(p));
-      const isGemini = !isGpt && GEMINI_MODEL_PATTERNS.some((p) => family.includes(p));
+      const isClaude = !isGpt && CLAUDE_MODEL_PATTERNS.some((p) => family.includes(p));
+      const isGemini = !isGpt && !isClaude && GEMINI_MODEL_PATTERNS.some((p) => family.includes(p));
 
       if (isGpt) {
         parts.push(OPENAI_MODEL_EXECUTION_GUIDANCE);
       } else if (isGemini) {
         parts.push(GOOGLE_MODEL_OPERATIONAL_GUIDANCE);
-      } else {
+      } else if (!isClaude) {
         // Unknown family — inject GPT guidance as conservative default
         parts.push(OPENAI_MODEL_EXECUTION_GUIDANCE);
       }
+      // Claude: TOOL_USE_ENFORCEMENT_GUIDANCE already injected above; no extra XML directives needed
 
       if (injectMemory) {
         parts.push(MEMORY_GUIDANCE);
@@ -179,8 +184,15 @@ export default definePluginEntry({
       }
 
       const guidance = parts.join("\n\n");
+      const detectedFamily = isGpt
+        ? "gpt"
+        : isClaude
+          ? "claude"
+          : isGemini
+            ? "gemini"
+            : "gpt(default)";
       api.logger.info?.(
-        `model-guidance: injecting ${parts.length} guidance block(s) for modelFamily=${family}`,
+        `model-guidance: injecting ${parts.length} guidance block(s) for modelFamily=${family} (detected: ${detectedFamily})`,
       );
 
       return { appendSystemContext: guidance };

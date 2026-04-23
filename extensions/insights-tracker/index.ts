@@ -1,6 +1,6 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+import { expandHomePrefix } from "openclaw/plugin-sdk/infra-runtime";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 // Model pricing in USD per 1M tokens (input/output/cacheRead).
@@ -80,13 +80,6 @@ type InsightsData = {
   lastUpdated: string;
 };
 
-function expandHome(p: string): string {
-  if (p.startsWith("~/")) {
-    return join(homedir(), p.slice(2));
-  }
-  return p;
-}
-
 function loadData(statsFile: string): InsightsData {
   try {
     if (existsSync(statsFile)) {
@@ -104,7 +97,11 @@ function pruneOldSessions(data: InsightsData, maxDays: number): InsightsData {
   };
 }
 
-function saveData(statsFile: string, data: InsightsData): void {
+function saveData(
+  statsFile: string,
+  data: InsightsData,
+  logger?: { warn?: (msg: string) => void },
+): void {
   try {
     const dir = dirname(statsFile);
     if (!existsSync(dir)) {
@@ -114,7 +111,7 @@ function saveData(statsFile: string, data: InsightsData): void {
     writeFileSync(statsFile, JSON.stringify(data, null, 2), { mode: 0o600 });
   } catch (e) {
     // Non-fatal: insights tracking should never disrupt agent operation
-    appendFileSync("/tmp/openclaw-insights-error.log", `${String(e)}\n`);
+    logger?.warn?.(`insights-tracker: saveData failed: ${String(e)}`);
   }
 }
 
@@ -128,7 +125,7 @@ export default definePluginEntry({
       return;
     }
 
-    const statsFile = expandHome(
+    const statsFile = expandHomePrefix(
       typeof cfg.statsFile === "string" && cfg.statsFile.trim()
         ? cfg.statsFile
         : "~/.openclaw/insights/stats.json",
@@ -217,7 +214,7 @@ export default definePluginEntry({
         } else {
           data.sessions.push(session);
         }
-        saveData(statsFile, data);
+        saveData(statsFile, data, api.logger);
         const totalIn = session.tokenUsage.reduce((sum, t) => sum + t.inputTokens, 0);
         const totalOut = session.tokenUsage.reduce((sum, t) => sum + t.outputTokens, 0);
         const estimatedUsd = session.tokenUsage.reduce((sum, t) => sum + estimateCostUsd(t), 0);

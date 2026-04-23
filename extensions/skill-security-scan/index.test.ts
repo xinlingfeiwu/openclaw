@@ -56,7 +56,9 @@ describe("skill-security-scan plugin", () => {
     expect(result[0]).toBeUndefined();
   });
 
-  it("detects injection in skill content", async () => {
+  it("auto-blocks critical injection threats by default", async () => {
+    // Critical-severity threats (e.g. "ignore all previous instructions") are
+    // blocked automatically — no explicit blockOnThreat config needed.
     const api = await loadPlugin({ scanPaths: [skillsDir] });
     const result = await api._trigger(
       "before_tool_call",
@@ -69,9 +71,7 @@ describe("skill-security-scan plugin", () => {
       },
       {},
     );
-    expect(result[0]).toMatchObject({
-      requireApproval: { title: expect.stringContaining("Security") },
-    });
+    expect(result[0]).toMatchObject({ block: true });
     expect(api.logger.warn).toHaveBeenCalled();
   });
 

@@ -1,5 +1,5 @@
-import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
+import { expandHomePrefix } from "openclaw/plugin-sdk/infra-runtime";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 // Expanded threat pattern library — ported from hermes-agent/tools/skills_guard.py.
@@ -583,16 +583,9 @@ type SkillSecurityConfig = {
   scanPaths?: string[];
 };
 
-function expandHome(p: string): string {
-  if (p.startsWith("~/")) {
-    return join(homedir(), p.slice(2));
-  }
-  return p;
-}
-
 function isSkillPath(filePath: string, scanPaths: string[]): boolean {
-  const abs = resolve(expandHome(filePath));
-  return scanPaths.some((sp) => abs.startsWith(resolve(expandHome(sp))));
+  const abs = resolve(expandHomePrefix(filePath));
+  return scanPaths.some((sp) => abs.startsWith(resolve(expandHomePrefix(sp))));
 }
 
 type ThreatFinding = {

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
+import { expandHomePrefix } from "openclaw/plugin-sdk/infra-runtime";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 // Invisible Unicode characters used in prompt injection attacks.
@@ -83,14 +83,13 @@ type SmartApprovalsConfig = {
   patternsFile?: string;
   sensitiveTools?: string[];
   dangerousPatterns?: string[];
+  /** Hard timeout in seconds for subagent delegation. Default: 300 */
+  delegationTimeoutSeconds?: number;
+  /** Heartbeat check interval in seconds. Default: 30 */
+  heartbeatIntervalSeconds?: number;
+  /** Stale cycles before escalating warning. Default: 5 */
+  staleThresholdCycles?: number;
 };
-
-function expandHome(p: string): string {
-  if (p.startsWith("~/")) {
-    return join(homedir(), p.slice(2));
-  }
-  return p;
-}
 
 function loadPatterns(patternsFile: string): PatternsData {
   try {
@@ -137,7 +136,7 @@ export default definePluginEntry({
       return;
     }
 
-    const patternsFile = expandHome(
+    const patternsFile = expandHomePrefix(
       typeof cfg.patternsFile === "string" && cfg.patternsFile.trim()
         ? cfg.patternsFile
         : "~/.openclaw/approved-patterns.json",
@@ -160,6 +159,119 @@ export default definePluginEntry({
             })
             .filter((r): r is RegExp => r !== null)
         : DEFAULT_DANGEROUS_PATTERNS;
+
+    // Subagent delegation timeout monitoring.
+    // Tracks running subagents and warns when they exceed hard timeout or stale heartbeat.
+    const hardTimeoutMs =
+      typeof cfg.delegationTimeoutSeconds === "number" && cfg.delegationTimeoutSeconds > 0
+        ? cfg.delegationTimeoutSeconds * 1000
+        : 300_000; // 5 minutes
+    const heartbeatMs =
+      typeof cfg.heartbeatIntervalSeconds === "number" && cfg.heartbeatIntervalSeconds > 0
+        ? cfg.heartbeatIntervalSeconds * 1000
+        : 30_000; // 30 seconds
+    const staleCycles =
+      typeof cfg.staleThresholdCycles === "number" && cfg.staleThresholdCycles > 0
+        ? cfg.staleThresholdCycles
+        : 5;
+
+    type SubagentMonitor = {
+      label: string;
+      spawnedAt: number;
+      lastActivityAt: number;
+      staleCount: number;
+      hardTimeoutHandle: ReturnType<typeof setTimeout>;
+      heartbeatHandle: ReturnType<typeof setInterval>;
+    };
+    const activeSubagents = new Map<string, SubagentMonitor>();
+
+    api.on("subagent_spawned", (event, _ctx) => {
+      const ev = event as { childSessionKey: string; agentId?: string; label?: string };
+      const key = ev.childSessionKey;
+      const label = ev.label ?? ev.agentId ?? key.slice(0, 8);
+      const now = Date.now();
+
+      const hardTimeoutHandle = setTimeout(() => {
+        const monitor = activeSubagents.get(key);
+        if (monitor) {
+          const elapsed = Math.round((Date.now() - monitor.spawnedAt) / 1000);
+          api.logger.warn?.(
+            `smart-approvals: subagent "${label}" hard timeout reached after ${elapsed}s ` +
+              `(limit: ${hardTimeoutMs / 1000}s). Gateway will handle cleanup.`,
+          );
+        }
+      }, hardTimeoutMs);
+
+      const heartbeatHandle = setInterval(() => {
+        const monitor = activeSubagents.get(key);
+        if (!monitor) {
+          clearInterval(heartbeatHandle);
+          return;
+        }
+        const inactiveSecs = Math.round((Date.now() - monitor.lastActivityAt) / 1000);
+        if (inactiveSecs * 1000 >= heartbeatMs) {
+          monitor.staleCount++;
+          if (monitor.staleCount >= staleCycles) {
+            const totalSecs = Math.round((Date.now() - monitor.spawnedAt) / 1000);
+            api.logger.warn?.(
+              `smart-approvals: subagent "${label}" appears stale — no activity for ` +
+                `${inactiveSecs}s (${monitor.staleCount} cycles, running ${totalSecs}s total). ` +
+                `Consider /new if the agent is stuck.`,
+            );
+          }
+        }
+      }, heartbeatMs);
+
+      activeSubagents.set(key, {
+        label,
+        spawnedAt: now,
+        lastActivityAt: now,
+        staleCount: 0,
+        hardTimeoutHandle,
+        heartbeatHandle,
+      });
+
+      api.logger.info?.(
+        `smart-approvals: monitoring subagent "${label}" (hard limit: ${hardTimeoutMs / 1000}s)`,
+      );
+    });
+
+    api.on("subagent_ended", (event, _ctx) => {
+      const ev = event as { targetSessionKey: string; outcome?: string; reason?: string };
+      const key = ev.targetSessionKey;
+      const monitor = activeSubagents.get(key);
+      if (monitor) {
+        clearTimeout(monitor.hardTimeoutHandle);
+        clearInterval(monitor.heartbeatHandle);
+        activeSubagents.delete(key);
+        const elapsed = Math.round((Date.now() - monitor.spawnedAt) / 1000);
+        api.logger.info?.(
+          `smart-approvals: subagent "${monitor.label}" ended after ${elapsed}s ` +
+            `(outcome: ${ev.outcome ?? ev.reason ?? "unknown"})`,
+        );
+      }
+    });
+
+    // Update last activity time on llm_output for stale detection
+    api.on("llm_output", (event, ctx) => {
+      const sessionId = (ctx as { sessionId?: string }).sessionId ?? "";
+      for (const [key, monitor] of activeSubagents) {
+        if (key === sessionId || key.startsWith(sessionId)) {
+          monitor.lastActivityAt = Date.now();
+          monitor.staleCount = 0;
+          break;
+        }
+      }
+      // Also check if event has a sessionId hint
+      const ev = event as { sessionId?: string };
+      if (ev.sessionId) {
+        const monitor = activeSubagents.get(ev.sessionId);
+        if (monitor) {
+          monitor.lastActivityAt = Date.now();
+          monitor.staleCount = 0;
+        }
+      }
+    });
 
     api.on("before_tool_call", (event, _ctx) => {
       const ev = event as {

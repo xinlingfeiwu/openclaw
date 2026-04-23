@@ -1,6 +1,6 @@
 import { existsSync, realpathSync } from "node:fs";
-import { homedir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
+import { expandHomePrefix } from "openclaw/plugin-sdk/infra-runtime";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 // Ported from hermes tools/file_operations.py — WRITE_DENIED_PATHS and WRITE_DENIED_PREFIXES.
@@ -35,7 +35,7 @@ const WRITE_DENIED_EXACT = new Set<string>(
     "/etc/shadow",
     "/etc/hosts",
     "/etc/crontab",
-  ].map(expandHome),
+  ].map((p) => expandHomePrefix(p)),
 );
 
 // Path prefixes whose entire subtree is write-protected
@@ -53,7 +53,7 @@ const WRITE_DENIED_PREFIXES: string[] = [
   "~/.config/op", // 1Password CLI
   "~/.password-store",
   "~/.gnupg",
-].map(expandHome);
+].map((p) => expandHomePrefix(p));
 
 // Device files that hang on read/write — from hermes file_tools.py
 const BLOCKED_DEVICE_PATHS = new Set<string>([
@@ -84,15 +84,8 @@ const FILE_WRITE_TOOLS = new Set<string>([
   "save_file",
 ]);
 
-function expandHome(p: string): string {
-  if (p.startsWith("~/")) {
-    return resolve(homedir(), p.slice(2));
-  }
-  return p;
-}
-
 function isWriteDenied(rawPath: string): { denied: boolean; reason: string } {
-  const expanded = expandHome(rawPath);
+  const expanded = expandHomePrefix(rawPath);
   let resolved: string;
   try {
     // Use realpathSync for existing paths so symlinks can't bypass the blocklist.
@@ -162,12 +155,12 @@ export default definePluginEntry({
     // Extend the deny list with user-configured paths
     if (Array.isArray(cfg.additionalDeniedPaths)) {
       for (const p of cfg.additionalDeniedPaths) {
-        WRITE_DENIED_EXACT.add(expandHome(p));
+        WRITE_DENIED_EXACT.add(expandHomePrefix(p));
       }
     }
     if (Array.isArray(cfg.additionalDeniedPrefixes)) {
       for (const p of cfg.additionalDeniedPrefixes) {
-        WRITE_DENIED_PREFIXES.push(expandHome(p));
+        WRITE_DENIED_PREFIXES.push(expandHomePrefix(p));
       }
     }
 

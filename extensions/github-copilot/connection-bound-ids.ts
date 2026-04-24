@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 
 // Copilot's OpenAI-compatible `/responses` endpoint can emit replay item IDs
-// that encode upstream connection state. Those IDs are rejected after the
-// connection changes, so normalize them at the provider boundary before send.
+// and reasoning `encrypted_content` blobs that encode upstream connection state.
+// Both are rejected after the connection changes, so normalize them at the
+// provider boundary before send.
 
 function looksLikeConnectionBoundId(id: string): boolean {
   if (id.length < 24) {
@@ -32,12 +33,17 @@ export function rewriteCopilotConnectionBoundResponseIds(input: unknown): boolea
   let rewrote = false;
   for (const item of input as InputItem[]) {
     const id = item.id;
-    if (typeof id !== "string" || id.length === 0) {
-      continue;
-    }
-    if (looksLikeConnectionBoundId(id)) {
+    if (typeof id === "string" && id.length > 0 && looksLikeConnectionBoundId(id)) {
       item.id = deriveReplacementId(typeof item.type === "string" ? item.type : undefined, id);
       rewrote = true;
+    }
+    // encrypted_content blobs are cryptographically bound to the originating
+    // connection's internal item ID. After any connection change the blob
+    // verification fails with a 400, regardless of whether the public item ID
+    // was rewritten above. Strip them unconditionally for reasoning items so
+    // the server always receives a clean context.
+    if (item.type === "reasoning" && "encrypted_content" in item) {
+      delete item.encrypted_content;
     }
   }
   return rewrote;

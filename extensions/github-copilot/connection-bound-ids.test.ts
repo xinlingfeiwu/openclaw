@@ -44,4 +44,41 @@ describe("github-copilot connection-bound response IDs", () => {
     expect(rewriteCopilotResponsePayloadConnectionBoundIds(undefined)).toBe(false);
     expect(rewriteCopilotResponsePayloadConnectionBoundIds({ input: "text" })).toBe(false);
   });
+
+  it("strips encrypted_content from connection-bound reasoning items when rewriting IDs", () => {
+    const originalId = Buffer.from(`reasoning-${"x".repeat(24)}`).toString("base64");
+    const input = [
+      { id: originalId, type: "reasoning", encrypted_content: "stale-blob", summary: [] },
+    ];
+
+    expect(rewriteCopilotConnectionBoundResponseIds(input)).toBe(true);
+    expect(input[0]?.id).toMatch(/^rs_[a-f0-9]{16}$/);
+    expect(input[0]).not.toHaveProperty("encrypted_content");
+    expect(input[0]).toHaveProperty("summary");
+  });
+
+  it("strips encrypted_content from reasoning items even when ID is already in standard format", () => {
+    // gpt-5.4 on GitHub Copilot returns short rs_xxx IDs (< 24 chars) with
+    // encrypted_content blobs that are cryptographically bound to the originating
+    // connection. The ID is not rewritten (looks standard), but the content must
+    // still be stripped to avoid a 400 on reconnection.
+    const input = [
+      { id: "rs_66eb777a00e056be", type: "reasoning", encrypted_content: "stale-blob" },
+    ];
+
+    rewriteCopilotConnectionBoundResponseIds(input);
+    expect(input[0]?.id).toBe("rs_66eb777a00e056be");
+    expect(input[0]).not.toHaveProperty("encrypted_content");
+  });
+
+  it("does not strip encrypted_content from non-reasoning items", () => {
+    const input = [
+      { id: "msg_abc", type: "message", encrypted_content: "some-content" },
+      { id: "fc_def", type: "function_call", encrypted_content: "some-content" },
+    ];
+
+    rewriteCopilotConnectionBoundResponseIds(input);
+    expect(input[0]).toHaveProperty("encrypted_content");
+    expect(input[1]).toHaveProperty("encrypted_content");
+  });
 });

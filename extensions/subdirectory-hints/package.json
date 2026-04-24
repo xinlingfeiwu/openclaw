@@ -4,6 +4,7 @@
   "type": "module",
   "main": "./index.ts",
   "devDependencies": {
+    "@mariozechner/pi-agent-core": "0.69.0",
     "openclaw": "workspace:*"
   },
   "openclaw": {

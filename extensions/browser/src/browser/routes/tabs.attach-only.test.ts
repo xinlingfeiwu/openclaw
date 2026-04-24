@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../../../test-support.js";
 import "../server-context.chrome-test-harness.js";
 import * as chromeModule from "../chrome.js";
@@ -7,9 +7,33 @@ import { makeBrowserServerState } from "../server-context.test-harness.js";
 import { registerBrowserTabRoutes } from "./tabs.js";
 import { createBrowserRouteApp, createBrowserRouteResponse } from "./test-helpers.js";
 
+const PROXY_KEYS = [
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "http_proxy",
+  "https_proxy",
+  "ALL_PROXY",
+  "all_proxy",
+] as const;
+const savedProxyVars: Partial<Record<string, string>> = {};
+beforeEach(() => {
+  for (const key of PROXY_KEYS) {
+    savedProxyVars[key] = process.env[key];
+    delete process.env[key];
+  }
+});
+
 afterEach(() => {
   vi.clearAllMocks();
   vi.restoreAllMocks();
+  for (const key of PROXY_KEYS) {
+    const saved = savedProxyVars[key];
+    if (saved !== undefined) {
+      process.env[key] = saved;
+    } else {
+      delete process.env[key];
+    }
+  }
 });
 
 describe("browser tab routes attachOnly loopback profiles", () => {

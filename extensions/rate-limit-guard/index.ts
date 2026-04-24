@@ -1,6 +1,13 @@
-import { existsSync, mkdirSync, readdirSync, renameSync, writeFileSync, readFileSync } from "fs";
-import { homedir } from "os";
-import { join, dirname, resolve } from "path";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  writeFileSync,
+  readFileSync,
+} from "node:fs";
+import { homedir } from "node:os";
+import { join, dirname, resolve } from "node:path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 const DEFAULT_COOLDOWN_MS = 300_000; // 5 minutes, same as hermes nous_rate_guard.py default

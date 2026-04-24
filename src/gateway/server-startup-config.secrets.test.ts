@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigFileSnapshot, OpenClawConfig } from "../config/types.js";
 import type { PreparedSecretsRuntimeSnapshot, SecretResolverWarning } from "../secrets/runtime.js";
 import { KNOWN_WEAK_GATEWAY_TOKEN_PLACEHOLDERS } from "./known-weak-gateway-secrets.js";
@@ -63,6 +63,7 @@ function preparedSnapshot(config: OpenClawConfig): PreparedSecretsRuntimeSnapsho
 describe("gateway startup config secret preflight", () => {
   const previousSkipChannels = process.env.OPENCLAW_SKIP_CHANNELS;
   const previousSkipProviders = process.env.OPENCLAW_SKIP_PROVIDERS;
+  const previousGatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
 
   afterEach(() => {
     if (previousSkipChannels === undefined) {
@@ -75,6 +76,15 @@ describe("gateway startup config secret preflight", () => {
     } else {
       process.env.OPENCLAW_SKIP_PROVIDERS = previousSkipProviders;
     }
+    if (previousGatewayToken === undefined) {
+      delete process.env.OPENCLAW_GATEWAY_TOKEN;
+    } else {
+      process.env.OPENCLAW_GATEWAY_TOKEN = previousGatewayToken;
+    }
+  });
+
+  beforeEach(() => {
+    delete process.env.OPENCLAW_GATEWAY_TOKEN;
   });
 
   it("wraps startup secret activation failures without emitting reload state events", async () => {

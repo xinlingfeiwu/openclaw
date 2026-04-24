@@ -16,6 +16,21 @@ const TOKEN_AUTH = {
 
 describe("resolveGatewayRuntimeConfig", () => {
   describe("trusted-proxy auth mode", () => {
+    let originalToken: string | undefined;
+
+    beforeEach(() => {
+      originalToken = process.env.OPENCLAW_GATEWAY_TOKEN;
+      delete process.env.OPENCLAW_GATEWAY_TOKEN;
+    });
+
+    afterEach(() => {
+      if (originalToken !== undefined) {
+        process.env.OPENCLAW_GATEWAY_TOKEN = originalToken;
+      } else {
+        delete process.env.OPENCLAW_GATEWAY_TOKEN;
+      }
+    });
+
     // This test validates BOTH validation layers:
     // 1. CLI validation in src/cli/gateway-cli/run.ts (line 246)
     // 2. Runtime config validation in src/gateway/server-runtime-config.ts (line 99)

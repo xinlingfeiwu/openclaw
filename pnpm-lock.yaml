@@ -362,6 +362,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/channel-hints: {}
+
+  extensions/checkpoint-rollback:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/chutes:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -396,11 +404,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/context-fence: {}
+
   extensions/copilot-proxy:
     devDependencies:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/cron-silent-filter: {}
 
   extensions/deepgram:
     dependencies:
@@ -558,6 +570,8 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  extensions/file-safety-guard: {}
+
   extensions/firecrawl:
     dependencies:
       typebox:
@@ -646,6 +660,8 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/insights-tracker: {}
 
   extensions/irc:
     devDependencies:
@@ -805,6 +821,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/memory-nudge: {}
+
   extensions/memory-wiki:
     dependencies:
       typebox:
@@ -852,6 +870,14 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/mixture-of-agents:
+    dependencies:
+      '@sinclair/typebox':
+        specifier: 0.34.49
+        version: 0.34.49
+
+  extensions/model-guidance: {}
 
   extensions/moonshot:
     devDependencies:
@@ -994,6 +1020,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/process-monitor:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
+  extensions/prompt-cache-anchor: {}
+
   extensions/qa-channel:
     dependencies:
       typebox:
@@ -1088,6 +1122,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/rate-limit-guard:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/runway:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -1112,6 +1152,10 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/skill-auto-create: {}
+
+  extensions/skill-security-scan: {}
+
   extensions/skill-workshop:
     dependencies:
       typebox:
@@ -1121,6 +1165,8 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/skill-yaml-validator: {}
 
   extensions/slack:
     dependencies:
@@ -1141,6 +1187,16 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/smart-approvals: {}
+
+  extensions/smart-compaction: {}
+
+  extensions/smart-provider-fallback: {}
+
+  extensions/smart-router: {}
+
+  extensions/soul-personality: {}
+
   extensions/speech-core:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -1152,6 +1208,12 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/subdirectory-hints:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/synology-chat:
     dependencies:
@@ -1207,6 +1269,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/think-block-filter: {}
+
   extensions/tlon:
     dependencies:
       '@aws-sdk/client-s3':
@@ -1229,6 +1293,12 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  extensions/todo-manager:
+    dependencies:
+      '@sinclair/typebox':
+        specifier: 0.34.49
+        version: 0.34.49
+
   extensions/together:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -1245,6 +1315,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/tool-output-truncation: {}
+
   extensions/twitch:
     dependencies:
       '@twurple/api':
@@ -1260,6 +1332,8 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/usage-tracker: {}
 
   extensions/venice:
     devDependencies:
@@ -3692,6 +3766,9 @@ packages:
 
   '@silvia-odwyer/photon-node@0.3.4':
     resolution: {integrity: sha512-bnly4BKB3KDTFxrUIcgCLbaeVVS8lrAkri1pEzskpmxu9MdfGQTy8b8EgcD83ywD3RPMsIulY8xJH5Awa+t9fA==}
+
+  '@sinclair/typebox@0.34.49':
+    resolution: {integrity: sha512-brySQQs7Jtn0joV8Xh9ZV/hZb9Ozb0pmazDIASBkYKCjXrXU3mpcFahmK/z4YDhGkQvP9mWJbVyahdtU5wQA+A==}
 
   '@slack/bolt@4.7.0':
     resolution: {integrity: sha512-Xpf+gKegNvkHpft1z4YiuqZdciJ3tUp1bIRQxylW30Ovf+hzjb0M1zTHVtJsRw9jsjPxHTPoyanEXVvG6qVE1g==}
@@ -10148,6 +10225,8 @@ snapshots:
   '@shikijs/vscode-textmate@10.0.2': {}
 
   '@silvia-odwyer/photon-node@0.3.4': {}
+
+  '@sinclair/typebox@0.34.49': {}
 
   '@slack/bolt@4.7.0(@types/express@5.0.6)':
     dependencies:

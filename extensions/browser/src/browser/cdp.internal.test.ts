@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type WebSocket, WebSocketServer } from "ws";
 import { rawDataToString } from "../infra/ws.js";
 import {
@@ -89,10 +89,34 @@ async function startMockWsServer(handle: CdpReplyHandler) {
 describe("cdp internal", () => {
   let wss: WebSocketServer | null = null;
 
+  const PROXY_KEYS = [
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "ALL_PROXY",
+    "all_proxy",
+  ] as const;
+  const savedProxyVars: Partial<Record<string, string>> = {};
+  beforeEach(() => {
+    for (const key of PROXY_KEYS) {
+      savedProxyVars[key] = process.env[key];
+      delete process.env[key];
+    }
+  });
+
   afterEach(async () => {
     if (wss) {
       await new Promise<void>((resolve) => wss?.close(() => resolve()));
       wss = null;
+    }
+    for (const key of PROXY_KEYS) {
+      const saved = savedProxyVars[key];
+      if (saved !== undefined) {
+        process.env[key] = saved;
+      } else {
+        delete process.env[key];
+      }
     }
   });
 

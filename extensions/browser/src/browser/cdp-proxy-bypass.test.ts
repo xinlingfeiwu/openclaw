@@ -135,11 +135,21 @@ describe("cdp-proxy-bypass", () => {
 
   describe("withNoProxyForLocalhost", () => {
     const saved: Record<string, string | undefined> = {};
-    const vars = ["HTTP_PROXY", "NO_PROXY", "no_proxy"];
+    const vars = [
+      "HTTP_PROXY",
+      "HTTPS_PROXY",
+      "ALL_PROXY",
+      "http_proxy",
+      "https_proxy",
+      "all_proxy",
+      "NO_PROXY",
+      "no_proxy",
+    ];
 
     beforeEach(() => {
       for (const v of vars) {
         saved[v] = process.env[v];
+        delete process.env[v];
       }
     });
 

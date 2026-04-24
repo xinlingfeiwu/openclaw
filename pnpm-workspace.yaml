@@ -12,6 +12,7 @@ minimumReleaseAgeExclude:
   - "basic-ftp"
   - "hono"
   - "openclaw"
+  - "tokenjuice"
   - "protobufjs"
   - "@buape/carbon"
   - "vite"

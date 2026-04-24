@@ -1,5 +1,6 @@
-import { lstatSync, readFileSync } from "fs";
-import { dirname, join, resolve } from "path";
+import { lstatSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 const DEFAULT_MAX_DEPTH = 5;
@@ -214,7 +215,7 @@ export default definePluginEntry({
       api.logger.info?.(
         `subdirectory-hints: injected context from ${found.filePath} (${content.length} chars)`,
       );
-      return { message: modifiedMsg as import("@mariozechner/pi-agent-core").AgentMessage };
+      return { message: modifiedMsg as AgentMessage };
     });
   },
 });

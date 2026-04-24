@@ -31,6 +31,16 @@ const DIR_ID_EXCEPTIONS = new Map<string, string>([
   // Historical directory name kept until a wider repo cleanup is worth the churn.
   ["kimi-coding", "kimi"],
 ]);
+// Fork-specific extensions that use @openclaw-ext/ namespace or no scope.
+// These are local-only plugins not published under the @openclaw/ namespace.
+const FORK_PACKAGE_EXCEPTIONS = new Set<string>([
+  "checkpoint-rollback",
+  "cron-silent-filter",
+  "process-monitor",
+  "rate-limit-guard",
+  "skill-yaml-validator",
+  "subdirectory-hints",
+]);
 const ALLOWED_PACKAGE_SUFFIXES = [
   "",
   "-provider",
@@ -112,6 +122,7 @@ describe("bundled plugin naming guardrails", () => {
         records
           .filter(
             ({ packageName, manifestId }) =>
+              !FORK_PACKAGE_EXCEPTIONS.has(manifestId) &&
               !resolveAllowedPackageNamesForId(manifestId).includes(packageName),
           )
           .map(

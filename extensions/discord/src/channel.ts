@@ -1,4 +1,3 @@
-import { createRequire } from "node:module";
 import {
   buildLegacyDmAccountAllowlistAdapter,
   createAccountScopedAllowlistNameResolver,
@@ -17,6 +16,7 @@ import {
   createRuntimeDirectoryLiveAdapter,
 } from "openclaw/plugin-sdk/directory-runtime";
 import { formatErrorMessage } from "openclaw/plugin-sdk/error-runtime";
+import type { MessagePresentation } from "openclaw/plugin-sdk/interactive-runtime";
 import { createLazyRuntimeModule } from "openclaw/plugin-sdk/lazy-runtime";
 import { resolveOutboundSendDep } from "openclaw/plugin-sdk/outbound-runtime";
 import { sleepWithAbort } from "openclaw/plugin-sdk/runtime-env";
@@ -70,12 +70,8 @@ import { discordSetupAdapter } from "./setup-adapter.js";
 import { createDiscordPluginBase, discordConfigAdapter } from "./shared.js";
 import { collectDiscordStatusIssues } from "./status-issues.js";
 import { parseDiscordTarget } from "./target-parsing.js";
-import { normalizeDiscordAccentColor, resolveDiscordAccentColor } from "./ui-colors.js";
 
 type DiscordSendFn = typeof import("./send.js").sendMessageDiscord;
-type DiscordCarbonModule = typeof import("@buape/carbon");
-type DiscordTextDisplay = InstanceType<DiscordCarbonModule["TextDisplay"]>;
-type DiscordSeparator = InstanceType<DiscordCarbonModule["Separator"]>;
 
 let discordProviderRuntimePromise:
   | Promise<typeof import("./monitor/provider.runtime.js")>
@@ -84,7 +80,6 @@ let discordProbeRuntimePromise: Promise<typeof import("./probe.runtime.js")> | u
 let discordAuditModulePromise: Promise<typeof import("./audit.js")> | undefined;
 let discordSendModulePromise: Promise<typeof import("./send.js")> | undefined;
 let discordDirectoryLiveModulePromise: Promise<typeof import("./directory-live.js")> | undefined;
-let discordCarbonModuleCache: DiscordCarbonModule | null = null;
 
 const loadDiscordDirectoryConfigModule = createLazyRuntimeModule(
   () => import("./directory-config.js"),
@@ -99,8 +94,6 @@ const loadDiscordResolveUsersModule = createLazyRuntimeModule(() => import("./re
 const loadDiscordThreadBindingsManagerModule = createLazyRuntimeModule(
   () => import("./monitor/thread-bindings.manager.js"),
 );
-
-const require = createRequire(import.meta.url);
 
 async function loadDiscordProviderRuntime() {
   discordProviderRuntimePromise ??= import("./monitor/provider.runtime.js");
@@ -125,11 +118,6 @@ async function loadDiscordSendModule() {
 async function loadDiscordDirectoryLiveModule() {
   discordDirectoryLiveModulePromise ??= import("./directory-live.js");
   return await discordDirectoryLiveModulePromise;
-}
-
-function loadDiscordCarbonModule() {
-  discordCarbonModuleCache ??= require("@buape/carbon") as DiscordCarbonModule;
-  return discordCarbonModuleCache;
 }
 
 const REQUIRED_DISCORD_PERMISSIONS = ["ViewChannel", "SendMessages"] as const;
@@ -245,29 +233,20 @@ function formatDiscordIntents(intents?: {
   ].join(" ");
 }
 
-function buildDiscordCrossContextComponents(params: {
+function buildDiscordCrossContextPresentation(params: {
   originLabel: string;
   message: string;
   cfg: OpenClawConfig;
   accountId?: string | null;
-}) {
-  const { Container, Separator, TextDisplay } = loadDiscordCarbonModule();
+}): MessagePresentation {
   const trimmed = params.message.trim();
-  const components: Array<DiscordTextDisplay | DiscordSeparator> = [];
+  const blocks: MessagePresentation["blocks"] = [];
   if (trimmed) {
-    components.push(new TextDisplay(params.message));
-    components.push(new Separator({ divider: true, spacing: "small" }));
+    blocks.push({ type: "text", text: params.message });
+    blocks.push({ type: "divider" });
   }
-  components.push(new TextDisplay(`*From ${params.originLabel}*`));
-  const configuredAccent = resolveDiscordAccentColor({
-    cfg: params.cfg,
-    accountId: params.accountId,
-  });
-  return [
-    new Container(components, {
-      accentColor: normalizeDiscordAccentColor(configuredAccent) ?? configuredAccent,
-    }),
-  ];
+  blocks.push({ type: "context", text: `From ${params.originLabel}` });
+  return { blocks };
 }
 
 const resolveDiscordAllowlistGroupOverrides = createNestedAllowlistOverrideResolver({
@@ -485,7 +464,7 @@ export const discordPlugin: ChannelPlugin<ResolvedDiscordAccount, DiscordProbe> 
         resolveSessionTarget: ({ id }) => normalizeDiscordMessagingTarget(`channel:${id}`),
         parseExplicitTarget: ({ raw }) => parseDiscordExplicitTarget(raw),
         inferTargetChatType: ({ to }) => parseDiscordExplicitTarget(to)?.chatType,
-        buildCrossContextComponents: buildDiscordCrossContextComponents,
+        buildCrossContextPresentation: buildDiscordCrossContextPresentation,
         resolveOutboundSessionRoute: (params) => resolveDiscordOutboundSessionRoute(params),
         targetResolver: {
           looksLikeId: looksLikeDiscordTargetId,
@@ -601,6 +580,21 @@ export const discordPlugin: ChannelPlugin<ResolvedDiscordAccount, DiscordProbe> 
             accountId: accountId ?? undefined,
             maxAgeMs,
           }).map(toConversationLifecycleBinding),
+      },
+      heartbeat: {
+        sendTyping: async ({ cfg, to, accountId, threadId }) => {
+          const resolvedTo = resolveDiscordAttachedOutboundTarget({ to, threadId });
+          const target = parseDiscordTarget(resolvedTo, { defaultKind: "channel" });
+          if (!target || target.kind !== "channel") {
+            return;
+          }
+          await (
+            await loadDiscordSendModule()
+          ).sendTypingDiscord(target.id, {
+            cfg,
+            accountId: accountId ?? undefined,
+          });
+        },
       },
       status: createComputedAccountStatusAdapter<ResolvedDiscordAccount, DiscordProbe>({
         defaultRuntime: createDefaultChannelRuntimeState(DEFAULT_ACCOUNT_ID, {
@@ -824,8 +818,13 @@ export const discordPlugin: ChannelPlugin<ResolvedDiscordAccount, DiscordProbe> 
         idLabel: "discordUserId",
         message: PAIRING_APPROVED_MESSAGE,
         normalizeAllowEntry: createPairingPrefixStripper(/^(discord|user):/i),
-        notify: async ({ id, message }) => {
-          await (await loadDiscordSendModule()).sendMessageDiscord(`user:${id}`, message);
+        notify: async ({ cfg, id, message, accountId }) => {
+          await (
+            await loadDiscordSendModule()
+          ).sendMessageDiscord(`user:${id}`, message, {
+            cfg,
+            ...(accountId ? { accountId } : {}),
+          });
         },
       },
     },

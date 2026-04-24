@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { withFetchPreconnect } from "../../test-support.js";
 
 vi.hoisted(() => {
@@ -16,11 +16,35 @@ import {
   originalFetch,
 } from "./server-context.remote-tab-ops.harness.js";
 
+const PROXY_KEYS = [
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "http_proxy",
+  "https_proxy",
+  "ALL_PROXY",
+  "all_proxy",
+] as const;
+const savedProxyVars: Partial<Record<string, string>> = {};
+beforeEach(() => {
+  for (const key of PROXY_KEYS) {
+    savedProxyVars[key] = process.env[key];
+    delete process.env[key];
+  }
+});
+
 afterEach(async () => {
   const { closePlaywrightBrowserConnection } = await import("./pw-session.js");
   await closePlaywrightBrowserConnection().catch(() => {});
   globalThis.fetch = originalFetch;
   vi.restoreAllMocks();
+  for (const key of PROXY_KEYS) {
+    const saved = savedProxyVars[key];
+    if (saved !== undefined) {
+      process.env[key] = saved;
+    } else {
+      delete process.env[key];
+    }
+  }
 });
 
 function seedRunningProfileState(

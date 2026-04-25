@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { withFetchPreconnect } from "../../test-support.js";
+import { withBrowserFetchPreconnect } from "../../test-fetch.js";
 
 vi.hoisted(() => {
   vi.resetModules();
@@ -106,7 +106,7 @@ async function openManagedTabWithRunningProfile(params: {
   fetchMock: ReturnType<typeof vi.fn>;
   url?: string;
 }) {
-  global.fetch = withFetchPreconnect(params.fetchMock);
+  global.fetch = withBrowserFetchPreconnect(params.fetchMock);
   const state = makeState("openclaw");
   seedRunningProfileState(state);
   const ctx = createBrowserRouteContext({ getState: () => state });
@@ -139,7 +139,7 @@ describe("browser server-context tab selection state", () => {
       } as unknown as Response;
     });
 
-    global.fetch = withFetchPreconnect(fetchMock);
+    global.fetch = withBrowserFetchPreconnect(fetchMock);
     const state = makeState("openclaw");
     const ctx = createBrowserRouteContext({ getState: () => state });
     const openclaw = ctx.forProfile("openclaw");
@@ -183,7 +183,7 @@ describe("browser server-context tab selection state", () => {
       } as unknown as Response;
     });
 
-    global.fetch = withFetchPreconnect(fetchMock);
+    global.fetch = withBrowserFetchPreconnect(fetchMock);
     const state = makeState("openclaw");
     state.resolved.ssrfPolicy = {};
     const ctx = createBrowserRouteContext({ getState: () => state });
@@ -249,7 +249,7 @@ describe("browser server-context tab selection state", () => {
       throw new Error(`unexpected fetch: ${value}`);
     });
 
-    global.fetch = withFetchPreconnect(fetchMock);
+    global.fetch = withBrowserFetchPreconnect(fetchMock);
     const state = makeState("openclaw");
     seedRunningProfileState(state);
     const ctx = createBrowserRouteContext({ getState: () => state });
@@ -269,7 +269,7 @@ describe("browser server-context tab selection state", () => {
       },
     });
 
-    global.fetch = withFetchPreconnect(fetchMock);
+    global.fetch = withBrowserFetchPreconnect(fetchMock);
     const state = makeState("openclaw");
     state.resolved.attachOnly = true;
     const ctx = createBrowserRouteContext({ getState: () => state });
@@ -311,7 +311,7 @@ describe("browser server-context tab selection state", () => {
       throw new Error("unexpected fetch");
     });
 
-    global.fetch = withFetchPreconnect(fetchMock);
+    global.fetch = withBrowserFetchPreconnect(fetchMock);
     const state = makeState("openclaw");
     const ctx = createBrowserRouteContext({ getState: () => state });
     const openclaw = ctx.forProfile("openclaw");

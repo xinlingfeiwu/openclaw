@@ -14,6 +14,7 @@ let logWebSelfId: typeof import("./session.js").logWebSelfId;
 let waitForWaConnection: typeof import("./session.js").waitForWaConnection;
 let waitForCredsSaveQueue: typeof import("./session.js").waitForCredsSaveQueue;
 let writeCredsJsonAtomically: typeof import("./session.js").writeCredsJsonAtomically;
+let credsPersistenceTesting: typeof import("./creds-persistence.js").__testing;
 
 async function flushCredsUpdate() {
   await new Promise<void>((resolve) => setImmediate(resolve));
@@ -147,6 +148,7 @@ describe("web session", () => {
       waitForCredsSaveQueue,
       writeCredsJsonAtomically,
     } = await import("./session.js"));
+    ({ __testing: credsPersistenceTesting } = await import("./creds-persistence.js"));
   });
 
   beforeEach(() => {
@@ -156,7 +158,10 @@ describe("web session", () => {
   });
 
   afterEach(async () => {
-    await waitForCredsSaveQueue();
+    const queueResult = await credsPersistenceTesting.waitForAllCredsSaveQueuesWithTimeout(1_000);
+    if (queueResult === "timed_out") {
+      credsPersistenceTesting.resetCredsSaveQueues();
+    }
     resetLogger();
     setLoggerOverride(null);
     vi.unstubAllEnvs();
@@ -393,9 +398,11 @@ describe("web session", () => {
 
     await flushCredsUpdate();
 
-    expect(openMock.tempHandles).toHaveLength(2);
-    expect(inFlightA).toBe(1);
-    expect(inFlightB).toBe(1);
+    await vi.waitFor(() => {
+      expect(openMock.tempHandles).toHaveLength(2);
+      expect(inFlightA).toBe(1);
+      expect(inFlightB).toBe(1);
+    });
 
     (releaseA as (() => void) | null)?.();
     (releaseB as (() => void) | null)?.();

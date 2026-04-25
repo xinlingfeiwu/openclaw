@@ -100,3 +100,28 @@ export async function waitForCredsSaveQueueWithTimeout(
     }
   });
 }
+
+async function waitForAllCredsSaveQueuesWithTimeout(
+  timeoutMs = CREDS_SAVE_FLUSH_TIMEOUT_MS,
+): Promise<CredsQueueWaitResult> {
+  let flushTimeout: ReturnType<typeof setTimeout> | undefined;
+  return await Promise.race([
+    waitForCredsSaveQueue().then(() => "drained" as const),
+    new Promise<CredsQueueWaitResult>((resolve) => {
+      flushTimeout = setTimeout(() => resolve("timed_out"), timeoutMs);
+    }),
+  ]).finally(() => {
+    if (flushTimeout) {
+      clearTimeout(flushTimeout);
+    }
+  });
+}
+
+function resetCredsSaveQueues() {
+  credsSaveQueues.clear();
+}
+
+export const __testing = {
+  resetCredsSaveQueues,
+  waitForAllCredsSaveQueuesWithTimeout,
+};

@@ -7,8 +7,6 @@ read_when:
 title: "CLI backends"
 ---
 
-# CLI backends (fallback runtime)
-
 OpenClaw can run **local AI CLIs** as a **text-only fallback** when API providers are down,
 rate-limited, or temporarily misbehaving. This is intentionally conservative:
 
@@ -351,6 +349,12 @@ When bundle MCP is enabled, OpenClaw:
 If no MCP servers are enabled, OpenClaw still injects a strict config when a
 backend opts into bundle MCP so background runs stay isolated.
 
+Session-scoped bundled MCP runtimes are cached for reuse within a session, then
+reaped after `mcp.sessionIdleTtlMs` milliseconds of idle time (default 10
+minutes; set `0` to disable). One-shot embedded runs such as auth probes,
+slug generation, and active-memory recall request cleanup at run end so stdio
+children and Streamable HTTP/SSE streams do not outlive the run.
+
 ## Limitations
 
 - **No direct OpenClaw tool calls.** OpenClaw does not inject tool calls into
@@ -370,3 +374,8 @@ backend opts into bundle MCP so background runs stay isolated.
 - **No session continuity**: ensure `sessionArg` is set and `sessionMode` is not
   `none` (Codex CLI currently cannot resume with JSON output).
 - **Images ignored**: set `imageArg` (and verify CLI supports file paths).
+
+## Related
+
+- [Gateway runbook](/gateway)
+- [Local models](/gateway/local-models)

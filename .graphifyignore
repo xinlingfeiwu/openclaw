@@ -1,0 +1,16 @@
+node_modules/
+dist/
+dist-runtime/
+graphify-out/
+.git/
+pnpm-lock.yaml
+*.generated.*
+*.snap
+test-fixtures/
+vendor/
+patches/
+assets/
+docs/
+ui/src/i18n/locales/
+*.min.js
+*.min.css

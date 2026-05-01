@@ -46,6 +46,7 @@ import {
   isInvalidStreamingEventOrderError,
   isLikelyHttpErrorText,
   isRawApiErrorPayload,
+  isStreamingJsonParseError,
   sanitizeUserFacingText,
 } from "./sanitize-user-facing-text.js";
 import type { FailoverReason } from "./types.js";
@@ -270,6 +271,9 @@ export type ProviderRuntimeFailureKind =
   | "schema"
   | "sandbox_blocked"
   | "replay_invalid"
+  | "empty_response"
+  | "no_error_details"
+  | "unclassified"
   | "unknown";
 
 const BILLING_402_HINTS = [
@@ -756,11 +760,13 @@ function isProvider(provider: string | undefined, match: string): boolean {
   return Boolean(normalized && normalized.includes(match));
 }
 
-function isAnthropicGenericUnknownError(raw: string, provider?: string): boolean {
-  return (
-    isProvider(provider, "anthropic") &&
-    (normalizeOptionalLowercaseString(raw)?.includes("an unknown error occurred") ?? false)
-  );
+// pi-ai providers throw `Error("An unknown error occurred")` provider-agnostically
+// (anthropic, google, vertex, openai-completions, mistral, bedrock, etc.) when a
+// stream ends with stopReason === "aborted" | "error" without specific info. Treat
+// it as a transient transport failure so the configured fallback chain rotates
+// instead of returning the bare string to the user (#71620).
+function isGenericUnknownStreamError(raw: string): boolean {
+  return /^\s*an unknown error occurred\.?\s*$/i.test(raw);
 }
 
 function isOpenRouterProviderReturnedError(raw: string, provider?: string): boolean {
@@ -836,7 +842,7 @@ function classifyFailoverClassificationFromMessage(
   if (isAuthErrorMessage(raw)) {
     return toReasonClassification("auth");
   }
-  if (isAnthropicGenericUnknownError(raw, provider)) {
+  if (isGenericUnknownStreamError(raw)) {
     return toReasonClassification("timeout");
   }
   if (isOpenRouterProviderReturnedError(raw, provider)) {
@@ -852,7 +858,7 @@ function classifyFailoverClassificationFromMessage(
     return toReasonClassification("format");
   }
   if (isExactUnknownNoDetailsError(raw)) {
-    return toReasonClassification("unknown");
+    return toReasonClassification("no_error_details");
   }
   if (isTimeoutErrorMessage(raw)) {
     return toReasonClassification("timeout");
@@ -906,7 +912,7 @@ export function classifyProviderRuntimeFailureKind(
   const status = inferSignalStatus(normalizedSignal);
 
   if (!message && typeof status !== "number") {
-    return "unknown";
+    return "empty_response";
   }
   if (normalizedSignal.code === "refresh_contention") {
     return "refresh_contention";
@@ -964,7 +970,10 @@ export function classifyProviderRuntimeFailureKind(
   if (message && isTimeoutTransportErrorMessage(message, status)) {
     return "timeout";
   }
-  return "unknown";
+  if (message && isExactUnknownNoDetailsError(message)) {
+    return "no_error_details";
+  }
+  return "unclassified";
 }
 
 export function formatAssistantErrorText(
@@ -1148,6 +1157,10 @@ export function formatAssistantErrorText(
       "This can happen when the conversation is too long or contains content that was flagged. " +
       "Try /new to start a fresh session or /reset to compact the context."
     );
+  }
+
+  if (isStreamingJsonParseError(raw)) {
+    return "LLM streaming response contained a malformed fragment. Please try again.";
   }
 
   // Never return raw unhandled errors - log for debugging but return safe message

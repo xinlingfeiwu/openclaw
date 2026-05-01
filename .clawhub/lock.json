@@ -1,0 +1,1069 @@
+{
+  "version": 1,
+  "skills": {
+    "proactive-agent-1-2-4": {
+      "version": "1.0.0",
+      "installedAt": 1770365634920
+    },
+    "find-skills": {
+      "version": "0.1.0",
+      "installedAt": 1770365778466
+    },
+    "planning-with-files": {
+      "version": "1.2.0",
+      "installedAt": 1770392972468
+    },
+    "notebooklm": {
+      "version": "0.1.0",
+      "installedAt": 1770392986324
+    },
+    "copywriter": {
+      "version": "1.1.0",
+      "installedAt": 1770396515531
+    },
+    "seo-article-gen": {
+      "version": "1.0.0",
+      "installedAt": 1770396520904
+    },
+    "content-strategy": {
+      "version": "0.1.0",
+      "installedAt": 1770396525582
+    },
+    "social-media-management": {
+      "version": "1.0.0",
+      "installedAt": 1770396530976
+    },
+    "linkedin-automation": {
+      "version": "1.0.0",
+      "installedAt": 1770396536794
+    },
+    "email-daily-summary": {
+      "version": "0.1.0",
+      "installedAt": 1770396542105
+    },
+    "automation-workflows": {
+      "version": "0.1.0",
+      "installedAt": 1770396546957
+    },
+    "airtable-automation": {
+      "version": "0.1.0",
+      "installedAt": 1770396552012
+    },
+    "business-model-canvas": {
+      "version": "0.1.0",
+      "installedAt": 1770396556703
+    },
+    "business-plan": {
+      "version": "0.1.0",
+      "installedAt": 1770396563992
+    },
+    "sendclaw": {
+      "version": "1.0.9",
+      "installedAt": 1770396570730
+    },
+    "us-stock-analysis": {
+      "version": "0.1.1",
+      "installedAt": 1770396578114
+    },
+    "react-email-skills": {
+      "version": "1.0.0",
+      "installedAt": 1770396585107
+    },
+    "model-router": {
+      "version": "1.1.0",
+      "installedAt": 1770396591594
+    },
+    "marketing-mode": {
+      "version": "1.0.0",
+      "installedAt": 1771278253612
+    },
+    "master-marketing": {
+      "version": "1.0.1",
+      "installedAt": 1771278255617
+    },
+    "marketing-strategy-pmm": {
+      "version": "1.0.0",
+      "installedAt": 1771278258683
+    },
+    "seo-competitor-analysis": {
+      "version": "1.0.0",
+      "installedAt": 1771278261004
+    },
+    "seo-optimizer": {
+      "version": "0.1.0",
+      "installedAt": 1771278263646
+    },
+    "seo": {
+      "version": "1.0.1",
+      "installedAt": 1771278265648
+    },
+    "seo-autopilot": {
+      "version": "1.0.0",
+      "installedAt": 1771278275224
+    },
+    "seo-content-writer": {
+      "version": "2.0.0",
+      "installedAt": 1771278277517
+    },
+    "technical-seo-checker": {
+      "version": "2.0.0",
+      "installedAt": 1771278279459
+    },
+    "on-page-seo-auditor": {
+      "version": "2.0.0",
+      "installedAt": 1771278281681
+    },
+    "ai-seo-writer": {
+      "version": "1.0.0",
+      "installedAt": 1771278283960
+    },
+    "data-analysis": {
+      "version": "1.0.0",
+      "installedAt": 1771278286236
+    },
+    "sales-pipeline-tracker": {
+      "version": "1.0.0",
+      "installedAt": 1771278300777
+    },
+    "social-media-agent": {
+      "version": "1.0.0",
+      "installedAt": 1771278302854
+    },
+    "social-media-scheduler": {
+      "version": "1.0.0",
+      "installedAt": 1771278304977
+    },
+    "social-media-manager": {
+      "version": "1.1.0",
+      "installedAt": 1771278306885
+    },
+    "email-marketing": {
+      "version": "1.0.0",
+      "installedAt": 1771278308664
+    },
+    "deep-research-pro": {
+      "version": "1.0.2",
+      "installedAt": 1771278310855
+    },
+    "market-research": {
+      "version": "1.0.0",
+      "installedAt": 1771278314386
+    },
+    "writing": {
+      "version": "1.0.0",
+      "installedAt": 1771278316546
+    },
+    "business-writing": {
+      "version": "0.1.0",
+      "installedAt": 1771278318857
+    },
+    "writing-assistant": {
+      "version": "0.1.0",
+      "installedAt": 1771278320757
+    },
+    "productivity": {
+      "version": "1.0.1",
+      "installedAt": 1771278323752
+    },
+    "business-development": {
+      "version": "1.0.0",
+      "installedAt": 1771278339788
+    },
+    "business-administration": {
+      "version": "1.0.0",
+      "installedAt": 1771278342283
+    },
+    "customer-onboarding": {
+      "version": "1.0.0",
+      "installedAt": 1771278346568
+    },
+    "marketing-demand-acquisition": {
+      "version": "1.0.0",
+      "installedAt": 1771278377542
+    },
+    "marketing-drafter": {
+      "version": "1.0.0",
+      "installedAt": 1771278380142
+    },
+    "sales": {
+      "version": "1.0.0",
+      "installedAt": 1771278404800
+    },
+    "customer-feedback": {
+      "version": "0.1.0",
+      "installedAt": 1771278408928
+    },
+    "customer-retention": {
+      "version": "0.1.0",
+      "installedAt": 1771278413068
+    },
+    "email-to-calendar": {
+      "version": "1.13.1",
+      "installedAt": 1771278420058
+    },
+    "x-post-automation": {
+      "version": "1.0.0",
+      "installedAt": 1771278425476
+    },
+    "yahoo-finance": {
+      "version": "1.0.0",
+      "installedAt": 1771278431359
+    },
+    "personal-finance": {
+      "version": "1.0.0",
+      "installedAt": 1771278435706
+    },
+    "data-analyst": {
+      "version": "1.0.0",
+      "installedAt": 1771278439945
+    },
+    "web-design": {
+      "version": "1.0.0",
+      "installedAt": 1771278443858
+    },
+    "ui-ux-design": {
+      "version": "1.0.0",
+      "installedAt": 1771278448233
+    },
+    "frontend-design-3": {
+      "version": "0.1.0",
+      "installedAt": 1771278452677
+    },
+    "brand-identity-analyzer": {
+      "version": "1.1.0",
+      "installedAt": 1771278484988
+    },
+    "brand-voice": {
+      "version": "1.0.0",
+      "installedAt": 1771278488096
+    },
+    "pricing": {
+      "version": "1.0.0",
+      "installedAt": 1771278491317
+    },
+    "pricing-psychology": {
+      "version": "1.0.0",
+      "installedAt": 1771278494413
+    },
+    "ai-proposal-generator": {
+      "version": "1.0.0",
+      "installedAt": 1771278498476
+    },
+    "freelance-proposal-engine": {
+      "version": "1.0.0",
+      "installedAt": 1771278501824
+    },
+    "freelance": {
+      "version": "1.0.0",
+      "installedAt": 1771278505227
+    },
+    "project-manager": {
+      "version": "1.0.0",
+      "installedAt": 1771278508554
+    },
+    "api-dev": {
+      "version": "1.0.0",
+      "installedAt": 1771278511565
+    },
+    "api-tester": {
+      "version": "1.0.0",
+      "installedAt": 1771278515059
+    },
+    "xpr-web-scraping": {
+      "version": "0.2.11",
+      "installedAt": 1771278518585
+    },
+    "deep-scraper": {
+      "version": "1.0.1",
+      "installedAt": 1771278521915
+    },
+    "lead-generation": {
+      "version": "2.2.0",
+      "installedAt": 1771278554152
+    },
+    "linkedin-lead-generation": {
+      "version": "1.0.0",
+      "installedAt": 1771278557379
+    },
+    "landing-page-generator": {
+      "version": "1.0.0",
+      "installedAt": 1771278560637
+    },
+    "landing-page": {
+      "version": "1.0.0",
+      "installedAt": 1771278564045
+    },
+    "newsletter-creation-curation": {
+      "version": "1.0.0",
+      "installedAt": 1771278567260
+    },
+    "content-ideas-generator": {
+      "version": "1.0.0",
+      "installedAt": 1771278570223
+    },
+    "video-subtitles": {
+      "version": "1.0.0",
+      "installedAt": 1771278573741
+    },
+    "demo-video": {
+      "version": "1.0.0",
+      "installedAt": 1771278576904
+    },
+    "remotion-video-toolkit": {
+      "version": "1.4.0",
+      "installedAt": 1771278581696
+    },
+    "google-analytics": {
+      "version": "1.0.10",
+      "installedAt": 1771278584977
+    },
+    "analytics": {
+      "version": "1.0.0",
+      "installedAt": 1771278588258
+    },
+    "monetize": {
+      "version": "1.0.2",
+      "installedAt": 1771278622342
+    },
+    "copywriting": {
+      "version": "0.1.0",
+      "installedAt": 1771278625478
+    },
+    "contract-generator": {
+      "version": "1.0.0",
+      "installedAt": 1771278628726
+    },
+    "ai-invoice-generator": {
+      "version": "1.0.0",
+      "installedAt": 1771278632084
+    },
+    "crm": {
+      "version": "1.0.0",
+      "installedAt": 1771278635352
+    },
+    "competitor-analysis": {
+      "version": "2.0.0",
+      "installedAt": 1771278639291
+    },
+    "competitor-watch": {
+      "version": "1.1.0",
+      "installedAt": 1771278643295
+    },
+    "generate-presentation": {
+      "version": "1.0.0",
+      "installedAt": 1771278647272
+    },
+    "academic-deep-research": {
+      "version": "1.0.0",
+      "installedAt": 1771278652048
+    },
+    "parallel-deep-research": {
+      "version": "1.0.0",
+      "installedAt": 1771278666179
+    },
+    "baidu-search": {
+      "version": "1.1.0",
+      "installedAt": 1771278673079
+    },
+    "firecrawl-search": {
+      "version": "1.0.0",
+      "installedAt": 1771278676626
+    },
+    "docker-essentials": {
+      "version": "1.0.0",
+      "installedAt": 1771278726683
+    },
+    "docker": {
+      "version": "1.0.2",
+      "installedAt": 1771278731302
+    },
+    "py": {
+      "version": "1.0.1",
+      "installedAt": 1771278734995
+    },
+    "python-dataviz": {
+      "version": "1.0.0",
+      "installedAt": 1771278738942
+    },
+    "database-operations": {
+      "version": "1.0.0",
+      "installedAt": 1771278746280
+    },
+    "sql-toolkit": {
+      "version": "1.0.0",
+      "installedAt": 1771278749272
+    },
+    "security-auditor": {
+      "version": "1.0.0",
+      "installedAt": 1771278753985
+    },
+    "senior-security": {
+      "version": "1.0.0",
+      "installedAt": 1771278757771
+    },
+    "research-engine": {
+      "version": "1.0.0",
+      "installedAt": 1771291439717
+    },
+    "code-review": {
+      "version": "1.0.0",
+      "installedAt": 1771291443932
+    },
+    "devops": {
+      "version": "1.0.0",
+      "installedAt": 1771291448335
+    },
+    "web-deploy-github": {
+      "version": "1.0.0",
+      "installedAt": 1771291453855
+    },
+    "legal": {
+      "version": "1.0.0",
+      "installedAt": 1771291502025
+    },
+    "image-generation": {
+      "version": "1.0.0",
+      "installedAt": 1771291505796
+    },
+    "pdf": {
+      "version": "0.1.0",
+      "installedAt": 1771291508912
+    },
+    "pdf-extract": {
+      "version": "1.0.0",
+      "installedAt": 1771291512090
+    },
+    "google-sheets": {
+      "version": "1.0.6",
+      "installedAt": 1771291515707
+    },
+    "microsoft-excel": {
+      "version": "1.0.3",
+      "installedAt": 1771291518860
+    },
+    "gcalcli-calendar": {
+      "version": "3.0.0",
+      "installedAt": 1771291521964
+    },
+    "lark-calendar": {
+      "version": "1.0.0",
+      "installedAt": 1771291526276
+    },
+    "startup": {
+      "version": "1.0.0",
+      "installedAt": 1771291529451
+    },
+    "startup-metrics": {
+      "version": "1.0.0",
+      "installedAt": 1771291533143
+    },
+    "growth": {
+      "version": "1.0.0",
+      "installedAt": 1771291536622
+    },
+    "youtube-transcript": {
+      "version": "1.0.1",
+      "installedAt": 1771291561583
+    },
+    "tiktok-crawling": {
+      "version": "1.0.0",
+      "installedAt": 1771291566683
+    },
+    "tiktok-viral-marketing": {
+      "version": "0.1.0",
+      "installedAt": 1771291570468
+    },
+    "hugo-blog-agent": {
+      "version": "1.0.0",
+      "installedAt": 1771291573858
+    },
+    "blogburst": {
+      "version": "1.2.0",
+      "installedAt": 1771291577325
+    },
+    "youtube-api-skill": {
+      "version": "1.0.3",
+      "installedAt": 1771291637388
+    },
+    "prompt-engineering-expert": {
+      "version": "1.0.0",
+      "installedAt": 1771291642066
+    },
+    "n8n-workflow-automation": {
+      "version": "1.0.0",
+      "installedAt": 1771291645773
+    },
+    "webhook": {
+      "version": "1.0.0",
+      "installedAt": 1771291649042
+    },
+    "git-essentials": {
+      "version": "1.0.0",
+      "installedAt": 1771291652162
+    },
+    "git-workflows": {
+      "version": "1.0.0",
+      "installedAt": 1771291655725
+    },
+    "vercel-deploy": {
+      "version": "1.0.0",
+      "installedAt": 1771291659912
+    },
+    "readme-generator": {
+      "version": "1.0.0",
+      "installedAt": 1771291664768
+    },
+    "telegram-bot": {
+      "version": "1.0.0",
+      "installedAt": 1771291684081
+    },
+    "monitoring": {
+      "version": "1.0.0",
+      "installedAt": 1771291689698
+    },
+    "prompt-assemble": {
+      "version": "1.0.4",
+      "installedAt": 1771291697494
+    },
+    "documentation": {
+      "version": "1.0.0",
+      "installedAt": 1771291700829
+    },
+    "podcast": {
+      "version": "1.0.1",
+      "installedAt": 1771291722601
+    },
+    "agent-autonomy-kit": {
+      "version": "1.0.0",
+      "installedAt": 1771291744498
+    },
+    "cloudflare-r2": {
+      "version": "1.0.0",
+      "installedAt": 1771291757320
+    },
+    "testing-patterns": {
+      "version": "0.1.0",
+      "installedAt": 1771291762089
+    },
+    "e2e-testing-patterns": {
+      "version": "1.0.0",
+      "installedAt": 1771291766558
+    },
+    "product-to-ads": {
+      "version": "1.4.0",
+      "installedAt": 1771291876678
+    },
+    "supabase": {
+      "version": "1.0.0",
+      "installedAt": 1771291881184
+    },
+    "stripe-api": {
+      "version": "1.0.8",
+      "installedAt": 1771291885333
+    },
+    "shopify-admin-api": {
+      "version": "1.0.0",
+      "installedAt": 1771291889842
+    },
+    "woocommerce": {
+      "version": "1.0.3",
+      "installedAt": 1771291894182
+    },
+    "rag": {
+      "version": "1.0.0",
+      "installedAt": 1771291900313
+    },
+    "typescript": {
+      "version": "1.0.2",
+      "installedAt": 1771291904870
+    },
+    "youtube-watcher": {
+      "version": "1.0.0",
+      "installedAt": 1771291949888
+    },
+    "git-changelog": {
+      "version": "1.0.0",
+      "installedAt": 1771291955270
+    },
+    "aws": {
+      "version": "1.0.1",
+      "installedAt": 1771291960443
+    },
+    "topic-monitor": {
+      "version": "1.3.4",
+      "installedAt": 1771291966672
+    },
+    "upload-post": {
+      "version": "1.0.0",
+      "installedAt": 1771291981134
+    },
+    "nextjs": {
+      "version": "1.0.2",
+      "installedAt": 1771291988108
+    },
+    "tailwind-design-system": {
+      "version": "1.0.0",
+      "installedAt": 1771291993500
+    },
+    "translate": {
+      "version": "1.0.0",
+      "installedAt": 1771296286560
+    },
+    "vue-expert": {
+      "version": "0.1.0",
+      "installedAt": 1771296316217
+    },
+    "java": {
+      "version": "1.0.1",
+      "installedAt": 1771296319938
+    },
+    "regex-patterns": {
+      "version": "1.0.0",
+      "installedAt": 1771296323132
+    },
+    "clean-code": {
+      "version": "1.0.0",
+      "installedAt": 1771296328060
+    },
+    "architecture-designer": {
+      "version": "0.1.0",
+      "installedAt": 1771296333285
+    },
+    "graphql": {
+      "version": "1.0.1",
+      "installedAt": 1771296361142
+    },
+    "accessibility": {
+      "version": "0.1.0",
+      "installedAt": 1771296366132
+    },
+    "scrape": {
+      "version": "1.0.0",
+      "installedAt": 1771296373584
+    },
+    "linux": {
+      "version": "1.0.0",
+      "installedAt": 1771296376766
+    },
+    "redis-store": {
+      "version": "1.0.0",
+      "installedAt": 1771296381567
+    },
+    "todoist": {
+      "version": "0.2.1",
+      "installedAt": 1771296424732
+    },
+    "react-expert": {
+      "version": "0.1.0",
+      "installedAt": 1771296430022
+    },
+    "react": {
+      "version": "1.0.3",
+      "installedAt": 1771296438217
+    },
+    "architecture": {
+      "version": "1.0.0",
+      "installedAt": 1771296443832
+    },
+    "app-store-optimization": {
+      "version": "1.0.0",
+      "installedAt": 1771296498195
+    },
+    "responsive-design": {
+      "version": "1.0.0",
+      "installedAt": 1771296502610
+    },
+    "performance-reporter": {
+      "version": "2.0.0",
+      "installedAt": 1771296507206
+    },
+    "svelte": {
+      "version": "1.0.0",
+      "installedAt": 1771296511707
+    },
+    "rust": {
+      "version": "1.0.1",
+      "installedAt": 1771296515856
+    },
+    "nginx": {
+      "version": "1.0.1",
+      "installedAt": 1771296545087
+    },
+    "microservice-patterns": {
+      "version": "1.0.0",
+      "installedAt": 1771296553081
+    },
+    "caching": {
+      "version": "1.0.0",
+      "installedAt": 1771296557093
+    },
+    "android": {
+      "version": "1.0.1",
+      "installedAt": 1771296561434
+    },
+    "ios-simulator": {
+      "version": "0.1.2",
+      "installedAt": 1771296566014
+    },
+    "jira": {
+      "version": "1.1.0",
+      "installedAt": 1771296606679
+    },
+    "asana-api": {
+      "version": "1.0.3",
+      "installedAt": 1771296612721
+    },
+    "github-actions-troubleshooting": {
+      "version": "1.0.0",
+      "installedAt": 1771296617169
+    },
+    "ci-cd": {
+      "version": "1.0.0",
+      "installedAt": 1771296621846
+    },
+    "agile-toolkit": {
+      "version": "1.0.0",
+      "installedAt": 1771296626117
+    },
+    "logo": {
+      "version": "1.0.0",
+      "installedAt": 1771296631009
+    },
+    "geo-optimization": {
+      "version": "1.1.0",
+      "installedAt": 1771296661748
+    },
+    "figma": {
+      "version": "2.1.0",
+      "installedAt": 1771296670533
+    },
+    "canva": {
+      "version": "1.0.0",
+      "installedAt": 1771296678751
+    },
+    "canva-connect": {
+      "version": "1.0.0",
+      "installedAt": 1771296682933
+    },
+    "wordpress": {
+      "version": "1.0.0",
+      "installedAt": 1771296687380
+    },
+    "markdown-converter": {
+      "version": "1.0.0",
+      "installedAt": 1771296691293
+    },
+    "csv": {
+      "version": "1.0.0",
+      "installedAt": 1771296695684
+    },
+    "jq-json-processor": {
+      "version": "1.0.0",
+      "installedAt": 1771296724118
+    },
+    "yaml": {
+      "version": "1.0.0",
+      "installedAt": 1771296728493
+    },
+    "openclaw-backup": {
+      "version": "1.0.0",
+      "installedAt": 1771296734250
+    },
+    "jwt": {
+      "version": "1.0.1",
+      "installedAt": 1771296738559
+    },
+    "oauth-helper": {
+      "version": "1.1.0",
+      "installedAt": 1771296744475
+    },
+    "encryption": {
+      "version": "1.0.0",
+      "installedAt": 1771296750393
+    },
+    "csv-pipeline": {
+      "version": "1.0.0",
+      "installedAt": 1771296812314
+    },
+    "xml": {
+      "version": "1.0.0",
+      "installedAt": 1771296816388
+    },
+    "playwright-scraper-skill": {
+      "version": "1.2.0",
+      "installedAt": 1771296857112
+    },
+    "playwright-mcp": {
+      "version": "1.0.0",
+      "installedAt": 1771296861260
+    },
+    "social-sentiment": {
+      "version": "1.4.0",
+      "installedAt": 1771296906431
+    },
+    "mission-control-dashboard": {
+      "version": "1.0.0",
+      "installedAt": 1771303822378
+    },
+    "crawl-for-ai": {
+      "version": "1.0.1",
+      "installedAt": 1771303832871
+    },
+    "daily-review-ritual": {
+      "version": "1.0.0",
+      "installedAt": 1771303873779
+    },
+    "chart-image": {
+      "version": "2.2.0",
+      "installedAt": 1771303879322
+    },
+    "prd": {
+      "version": "2.0.5",
+      "installedAt": 1771303884827
+    },
+    "product-manager": {
+      "version": "1.0.0",
+      "installedAt": 1771303890199
+    },
+    "weekly-report-generator": {
+      "version": "1.0.0",
+      "installedAt": 1771303906282
+    },
+    "focus-deep-work": {
+      "version": "1.0.0",
+      "installedAt": 1771303924985
+    },
+    "prompt-library-curator": {
+      "version": "1.0.0",
+      "installedAt": 1771303930411
+    },
+    "resume-cv-builder": {
+      "version": "1.0.0",
+      "installedAt": 1771303935630
+    },
+    "accounting": {
+      "version": "1.0.0",
+      "installedAt": 1771303954520
+    },
+    "travel-manager": {
+      "version": "1.0.0",
+      "installedAt": 1771303963683
+    },
+    "hiring": {
+      "version": "1.0.0",
+      "installedAt": 1771304019255
+    },
+    "postiz": {
+      "version": "1.0.7",
+      "installedAt": 1771304052342
+    },
+    "hubspot": {
+      "version": "1.0.1",
+      "installedAt": 1771304101808
+    },
+    "email-best-practices": {
+      "version": "1.0.0",
+      "installedAt": 1771304110832
+    },
+    "personal-assistant": {
+      "version": "1.0.0",
+      "installedAt": 1771304161242
+    },
+    "designer": {
+      "version": "1.0.0",
+      "installedAt": 1771304167956
+    },
+    "domain-dns-ops": {
+      "version": "1.0.0",
+      "installedAt": 1771304230976
+    },
+    "dns-networking": {
+      "version": "1.0.0",
+      "installedAt": 1771304240399
+    },
+    "hosting": {
+      "version": "1.0.0",
+      "installedAt": 1771304305913
+    },
+    "saas": {
+      "version": "1.0.0",
+      "installedAt": 1771304312001
+    },
+    "affiliate-master": {
+      "version": "1.0.0",
+      "installedAt": 1771304359059
+    },
+    "ad-ready": {
+      "version": "1.0.2",
+      "installedAt": 1771304367328
+    },
+    "interview-designer": {
+      "version": "1.0.0",
+      "installedAt": 1771304374926
+    },
+    "xiaohongshu-mcp": {
+      "version": "1.0.0",
+      "installedAt": 1771312502826
+    },
+    "zhihu": {
+      "version": "1.0.1",
+      "installedAt": 1771312508373
+    },
+    "wechat-article-search": {
+      "version": "0.1.0",
+      "installedAt": 1771312517513
+    },
+    "wechat-publisher": {
+      "version": "0.1.0",
+      "installedAt": 1771312523291
+    },
+    "chinese": {
+      "version": "1.0.0",
+      "installedAt": 1771312530286
+    },
+    "aliyun-tts": {
+      "version": "1.0.0",
+      "installedAt": 1771312549639
+    },
+    "webhook-robot": {
+      "version": "1.1.0",
+      "installedAt": 1771312576261
+    },
+    "xiaohongshu-title": {
+      "version": "1.0.0",
+      "installedAt": 1771312581359
+    },
+    "tencent-cos-skill": {
+      "version": "1.0.2",
+      "installedAt": 1771312642038
+    },
+    "alicloud-storage-oss-ossutil": {
+      "version": "1.0.2",
+      "installedAt": 1771312647476
+    },
+    "notion-api-automation": {
+      "version": "1.0.0",
+      "installedAt": 1771312681832
+    },
+    "ollama-local": {
+      "version": "1.1.0",
+      "installedAt": 1771312687446
+    },
+    "chromadb-memory": {
+      "version": "1.2.1",
+      "installedAt": 1771312746388
+    },
+    "google-drive": {
+      "version": "1.0.6",
+      "installedAt": 1771312806172
+    },
+    "google-docs": {
+      "version": "1.0.5",
+      "installedAt": 1771312811496
+    },
+    "google-calendar": {
+      "version": "0.1.0",
+      "installedAt": 1771312816742
+    },
+    "deepseek-reasoner-lite-agent": {
+      "version": "0.1.0",
+      "installedAt": 1771312886442
+    },
+    "product-hunt-launch": {
+      "version": "0.1.0",
+      "installedAt": 1771312892705
+    },
+    "ecommerce-price-watcher": {
+      "version": "1.1.0",
+      "installedAt": 1771312899101
+    },
+    "deepread-ocr": {
+      "version": "1.0.6",
+      "installedAt": 1771312906822
+    },
+    "receipt-subscription-cleaner": {
+      "version": "1.0.0",
+      "installedAt": 1771312914901
+    },
+    "kubernetes": {
+      "version": "1.0.0",
+      "installedAt": 1771312989488
+    },
+    "terraform-engineer": {
+      "version": "0.1.0",
+      "installedAt": 1771312997009
+    },
+    "grafana": {
+      "version": "1.0.0",
+      "installedAt": 1771313002408
+    },
+    "logging-observability": {
+      "version": "0.1.0",
+      "installedAt": 1771313007479
+    },
+    "sentry-observability": {
+      "version": "1.0.0",
+      "installedAt": 1771313012854
+    },
+    "senior-data-engineer": {
+      "version": "1.0.0",
+      "installedAt": 1771313044443
+    },
+    "llm-supervisor": {
+      "version": "0.3.0",
+      "installedAt": 1771313050791
+    },
+    "a-stock-analysis": {
+      "version": "1.0.0",
+      "installedAt": 1771313055930
+    },
+    "tushare-finance": {
+      "version": "2.0.6",
+      "installedAt": 1771313072038
+    },
+    "zhihu-post": {
+      "version": "1.0.0",
+      "installedAt": 1772779446302
+    },
+    "google-ads": {
+      "version": "1.1.0",
+      "installedAt": 1775614100185
+    },
+    "skill-security-audit-v2": {
+      "version": "1.0.0",
+      "installedAt": 1775614104038
+    },
+    "agent-device": {
+      "version": "1.0.1",
+      "installedAt": 1775614104651
+    },
+    "daily-planner": {
+      "version": "1.0.0",
+      "installedAt": 1775614140833
+    },
+    "browser-automation-cdp": {
+      "version": "1.0.0",
+      "installedAt": 1775614155818
+    },
+    "arxiv-watcher": {
+      "version": "1.0.0",
+      "installedAt": 1776823635289
+    },
+    "agent-team-orchestration": {
+      "version": "1.0.0",
+      "installedAt": 1776823635312
+    },
+    "amazon-product-api-skill": {
+      "version": "0.1.3",
+      "installedAt": 1776823635326
+    },
+    "biz-reporter": {
+      "version": "1.0.0",
+      "installedAt": 1776823635392
+    },
+    "bat-cat": {
+      "version": "1.0.0",
+      "installedAt": 1776823702142
+    }
+  }
+}

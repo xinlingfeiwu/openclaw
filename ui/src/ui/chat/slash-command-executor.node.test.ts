@@ -269,7 +269,7 @@ describe("executeSlashCommand directives", () => {
       "**Current model:** `gpt-4.1-mini`\n**Available:** `gpt-4.1-mini`, `gpt-4.1`",
     );
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
-    expect(request).toHaveBeenNthCalledWith(2, "models.list", {});
+    expect(request).toHaveBeenNthCalledWith(2, "models.list", { view: "configured" });
   });
 
   it("mirrors resolved provider-qualified model refs after /model changes", async () => {
@@ -488,7 +488,70 @@ describe("executeSlashCommand directives", () => {
     );
 
     expect(result.content).toBe(
-      "**Session Usage**\nInput: **1.2k** tokens\nOutput: **300** tokens\nTotal: **1.5k** tokens\nContext: **30%** of 4k\nModel: `gpt-4.1-mini`",
+      "**Session Usage**\nInput: **1.2k** tokens\nOutput: **300** tokens\nTotal: **1.5k** tokens\nContext: **38%** of 4k\nModel: `gpt-4.1-mini`",
+    );
+    expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
+  });
+
+  it("keeps /usage context hidden when the context snapshot is stale", async () => {
+    const request = vi.fn(async (method: string, _payload?: unknown) => {
+      if (method === "sessions.list") {
+        return {
+          sessions: [
+            row("agent:main:main", {
+              model: "gpt-4.1-mini",
+              inputTokens: 1200,
+              outputTokens: 300,
+              totalTokens: 1500,
+              totalTokensFresh: false,
+              contextTokens: 4000,
+            }),
+          ],
+        };
+      }
+      throw new Error(`unexpected method: ${method}`);
+    });
+
+    const result = await executeSlashCommand(
+      { request } as unknown as GatewayBrowserClient,
+      "agent:main:main",
+      "usage",
+      "",
+    );
+
+    expect(result.content).toBe(
+      "**Session Usage**\nInput: **1.2k** tokens\nOutput: **300** tokens\nTotal: **~1.5k** tokens\nModel: `gpt-4.1-mini`",
+    );
+    expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
+  });
+
+  it("uses the context snapshot for /usage while preserving cumulative total display", async () => {
+    const request = vi.fn(async (method: string, _payload?: unknown) => {
+      if (method === "sessions.list") {
+        return {
+          sessions: [
+            row("agent:main:main", {
+              model: "gpt-4.1-mini",
+              inputTokens: 1200,
+              outputTokens: 300,
+              totalTokens: 1250,
+              contextTokens: 4000,
+            }),
+          ],
+        };
+      }
+      throw new Error(`unexpected method: ${method}`);
+    });
+
+    const result = await executeSlashCommand(
+      { request } as unknown as GatewayBrowserClient,
+      "agent:main:main",
+      "usage",
+      "",
+    );
+
+    expect(result.content).toBe(
+      "**Session Usage**\nInput: **1.2k** tokens\nOutput: **300** tokens\nTotal: **1.5k** tokens\nContext: **31%** of 4k\nModel: `gpt-4.1-mini`",
     );
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
   });
@@ -524,7 +587,7 @@ describe("executeSlashCommand directives", () => {
       "Current thinking level: low.\nOptions: off, minimal, low, medium, high.",
     );
     expect(request).toHaveBeenNthCalledWith(1, "sessions.list", {});
-    expect(request).toHaveBeenNthCalledWith(2, "models.list", {});
+    expect(request).toHaveBeenNthCalledWith(2, "models.list", { view: "configured" });
   });
 
   it("accepts minimal and xhigh thinking levels", async () => {

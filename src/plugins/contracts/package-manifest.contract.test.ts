@@ -1,4 +1,4 @@
-import { describePackageManifestContract } from "../../../test/helpers/plugins/package-manifest-contract.js";
+import { describePackageManifestContract } from "openclaw/plugin-sdk/plugin-test-contracts";
 
 type PackageManifestContractParams = Parameters<typeof describePackageManifestContract>[0];
 
@@ -6,12 +6,7 @@ const packageManifestContractTests: PackageManifestContractParams[] = [
   { pluginId: "bluebubbles", minHostVersionBaseline: "2026.3.22" },
   {
     pluginId: "discord",
-    pluginLocalRuntimeDeps: [
-      "@buape/carbon",
-      "@discordjs/voice",
-      "discord-api-types",
-      "opusscript",
-    ],
+    pluginLocalRuntimeDeps: ["@discordjs/voice", "discord-api-types", "opusscript"],
     mirroredRootRuntimeDeps: ["https-proxy-agent"],
     minHostVersionBaseline: "2026.3.22",
   },
@@ -51,6 +46,11 @@ const packageManifestContractTests: PackageManifestContractParams[] = [
     mirroredRootRuntimeDeps: ["typebox"],
   },
   {
+    pluginId: "file-transfer",
+    pluginLocalRuntimeDeps: ["minimatch"],
+    mirroredRootRuntimeDeps: ["typebox"],
+  },
+  {
     pluginId: "matrix",
     pluginLocalRuntimeDeps: [
       "@matrix-org/matrix-sdk-crypto-nodejs",
@@ -75,10 +75,11 @@ const packageManifestContractTests: PackageManifestContractParams[] = [
       "@azure/identity",
       "@microsoft/teams.api",
       "@microsoft/teams.apps",
+      "express",
       "jsonwebtoken",
       "jwks-rsa",
     ],
-    mirroredRootRuntimeDeps: ["typebox", "express"],
+    mirroredRootRuntimeDeps: ["typebox"],
     minHostVersionBaseline: "2026.3.22",
   },
   { pluginId: "nextcloud-talk", minHostVersionBaseline: "2026.3.22" },

@@ -56,11 +56,6 @@
       ],
       "risk": ["native", "parser", "untrusted-files"]
     },
-    "@vincentkoc/qrcode-tui": {
-      "owner": "core:qr-setup",
-      "class": "default-runtime-initially",
-      "risk": ["terminal-rendering"]
-    },
     "ajv": {
       "owner": "core:json-schema-validation",
       "class": "core-runtime",
@@ -142,11 +137,6 @@
       "class": "default-runtime-initially",
       "risk": ["provider-sdk", "network"]
     },
-    "osc-progress": {
-      "owner": "core:terminal-progress",
-      "class": "core-runtime",
-      "risk": ["terminal-rendering"]
-    },
     "pdfjs-dist": {
       "owner": "plugin:document-extract",
       "class": "plugin-runtime",
@@ -158,14 +148,20 @@
       "class": "core-runtime",
       "risk": ["network", "proxy"]
     },
+    "qrcode": {
+      "owner": "core:qr-setup",
+      "class": "default-runtime-initially",
+      "risk": ["terminal-rendering", "png-encoding"]
+    },
     "semver": {
       "owner": "core:package-versioning",
       "class": "core-runtime",
       "risk": ["version-parser"]
     },
     "sharp": {
-      "owner": "capability:image-ops",
-      "class": "default-runtime-initially",
+      "owner": "plugin:media-understanding-core",
+      "class": "plugin-runtime",
+      "activation": ["media-understanding-core.image-ops"],
       "risk": ["native", "parser", "untrusted-files"]
     },
     "sqlite-vec": {
@@ -192,6 +188,11 @@
       "owner": "core:http-client",
       "class": "core-runtime",
       "risk": ["network"]
+    },
+    "web-push": {
+      "owner": "core:web-push",
+      "class": "core-runtime",
+      "risk": ["network", "push-notifications", "crypto"]
     },
     "ws": {
       "owner": "core:gateway-websocket",

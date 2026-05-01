@@ -1,0 +1,5 @@
+
+> openclaw@2026.1.30 openclaw /Users/leoliu/workspaces/ylingtech_workspaces/projects/openclaw
+> node scripts/run-node.mjs -- /Users/leoliu/workspaces/ylingtech_workspaces/projects/openclaw
+
+ ELIFECYCLE  Command failed with exit code 1.

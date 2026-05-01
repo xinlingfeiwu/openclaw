@@ -122,6 +122,8 @@ The provider id becomes the left side of your model ref:
           sessionMode: "existing",
           sessionIdFields: ["session_id", "conversation_id"],
           systemPromptArg: "--system",
+          // For CLIs with a dedicated prompt-file flag:
+          // systemPromptFileArg: "--system-file",
           // Codex-style CLIs can point at a prompt file instead:
           // systemPromptFileConfigArg: "-c",
           // systemPromptFileConfigKey: "model_instructions_file",
@@ -221,6 +223,27 @@ Serialization notes:
   account identity when the CLI exposes one. OAuth access and refresh token
   rotation does not cut the stored CLI session. If a CLI does not expose a
   stable OAuth account id, OpenClaw lets that CLI enforce resume permissions.
+
+## Fallback prelude from claude-cli sessions
+
+When a `claude-cli` attempt fails over to a non-CLI candidate in
+[`agents.defaults.model.fallbacks`](/concepts/model-failover), OpenClaw seeds
+the next attempt with a context prelude harvested from Claude Code's local
+JSONL transcript at `~/.claude/projects/`. Without this seed, the fallback
+provider would start cold because OpenClaw's own session transcript is empty
+for `claude-cli` runs.
+
+- The prelude prefers the latest `/compact` summary or `compact_boundary`
+  marker, then appends the most recent post-boundary turns up to a char
+  budget. Pre-boundary turns are dropped because the summary already represents
+  them.
+- Tool blocks are coalesced to compact `(tool call: name)` and
+  `(tool result: …)` hints to keep the prompt budget honest. The summary is
+  labeled `(truncated)` if it overflows.
+- Same-provider `claude-cli` to `claude-cli` fallbacks rely on Claude's own
+  `--resume` and skip the prelude.
+- The seed reuses the existing Claude session-file path validation, so
+  arbitrary paths cannot be read.
 
 ## Images (pass-through)
 

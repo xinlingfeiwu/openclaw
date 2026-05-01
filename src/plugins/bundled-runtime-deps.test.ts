@@ -929,6 +929,77 @@ describe("ensureBundledPluginRuntimeDeps", () => {
     expect(fs.existsSync(path.join(pluginRoot, ".openclaw-runtime-deps.json"))).toBe(false);
   });
 
+  it("reuses source-checkout cache node_modules via symlink for built bundled plugins", () => {
+    const packageRoot = makeTempDir();
+    fs.mkdirSync(path.join(packageRoot, ".git"), { recursive: true });
+    fs.mkdirSync(path.join(packageRoot, "src"), { recursive: true });
+    fs.mkdirSync(path.join(packageRoot, "extensions"), { recursive: true });
+    const pluginRoot = path.join(packageRoot, "dist", "extensions", "tokenjuice");
+    fs.mkdirSync(pluginRoot, { recursive: true });
+    fs.writeFileSync(
+      path.join(pluginRoot, "package.json"),
+      JSON.stringify({
+        dependencies: {
+          tokenjuice: "0.6.1",
+        },
+      }),
+    );
+
+    let sourceCheckoutCacheDir: string | null = null;
+    const first = ensureBundledPluginRuntimeDeps({
+      env: {},
+      installDeps: (params) => {
+        sourceCheckoutCacheDir = params.installExecutionRoot ?? null;
+        const installDir = params.installExecutionRoot ?? params.installRoot;
+        fs.mkdirSync(path.join(installDir, "node_modules", "tokenjuice"), { recursive: true });
+        fs.writeFileSync(
+          path.join(installDir, "node_modules", "tokenjuice", "package.json"),
+          JSON.stringify({ name: "tokenjuice", version: "0.6.1" }),
+        );
+      },
+      pluginId: "tokenjuice",
+      pluginRoot,
+    });
+
+    expect(first).toEqual({
+      installedSpecs: ["tokenjuice@0.6.1"],
+      retainSpecs: ["tokenjuice@0.6.1"],
+    });
+    expect(sourceCheckoutCacheDir).toEqual(
+      expect.stringContaining(path.join(".local", "bundled-plugin-runtime-deps")),
+    );
+    expect(fs.realpathSync(path.join(pluginRoot, "node_modules"))).toBe(
+      fs.realpathSync(path.join(sourceCheckoutCacheDir!, "node_modules")),
+    );
+
+    fs.rmSync(path.join(pluginRoot, "node_modules"), { recursive: true, force: true });
+
+    const second = ensureBundledPluginRuntimeDeps({
+      env: {},
+      installDeps: () => {
+        throw new Error("source-checkout cache restore should not reinstall");
+      },
+      pluginId: "tokenjuice",
+      pluginRoot,
+    });
+
+    expect(second).toEqual({ installedSpecs: [], retainSpecs: [] });
+    expect(fs.realpathSync(path.join(pluginRoot, "node_modules"))).toBe(
+      fs.realpathSync(path.join(sourceCheckoutCacheDir!, "node_modules")),
+    );
+    expect(
+      JSON.parse(
+        fs.readFileSync(
+          path.join(pluginRoot, "node_modules", "tokenjuice", "package.json"),
+          "utf8",
+        ),
+      ),
+    ).toEqual({
+      name: "tokenjuice",
+      version: "0.6.1",
+    });
+  });
+
   it("removes stale source-checkout manifests even when runtime deps are present", () => {
     const packageRoot = makeTempDir();
     fs.mkdirSync(path.join(packageRoot, ".git"), { recursive: true });

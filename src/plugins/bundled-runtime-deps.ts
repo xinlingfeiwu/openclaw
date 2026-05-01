@@ -559,6 +559,20 @@ function replaceNodeModulesDir(targetDir: string, sourceDir: string): void {
   }
 }
 
+function replaceNodeModulesDirWithSymlink(targetDir: string, sourceDir: string): boolean {
+  if (!fs.existsSync(sourceDir)) {
+    return false;
+  }
+  try {
+    fs.mkdirSync(path.dirname(targetDir), { recursive: true });
+    fs.rmSync(targetDir, { recursive: true, force: true });
+    fs.symlinkSync(path.resolve(sourceDir), targetDir, "junction");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function restoreSourceCheckoutRuntimeDepsFromCache(params: {
   cacheDir: string | null;
   deps: readonly { name: string }[];
@@ -572,7 +586,10 @@ function restoreSourceCheckoutRuntimeDepsFromCache(params: {
     return false;
   }
   try {
-    replaceNodeModulesDir(path.join(params.installRoot, "node_modules"), cachedNodeModulesDir);
+    const targetDir = path.join(params.installRoot, "node_modules");
+    if (!replaceNodeModulesDirWithSymlink(targetDir, cachedNodeModulesDir)) {
+      replaceNodeModulesDir(targetDir, cachedNodeModulesDir);
+    }
     return true;
   } catch {
     return false;
@@ -1176,9 +1193,7 @@ export function ensureBundledPluginRuntimeDeps(params: {
     });
     const isPluginRootInstall = path.resolve(installRoot) === path.resolve(params.pluginRoot);
     const sourceCheckoutCacheStage =
-      cacheDir &&
-      isPluginRootInstall &&
-      resolveSourceCheckoutBundledPluginPackageRoot(params.pluginRoot)
+      cacheDir && isPluginRootInstall && resolveSourceCheckoutPackageRoot(params.pluginRoot)
         ? cacheDir
         : undefined;
     const installExecutionRoot =
@@ -1207,7 +1222,15 @@ export function ensureBundledPluginRuntimeDeps(params: {
     if (persistRetainedManifest) {
       writeRetainedRuntimeDepsManifest(installRoot, installSpecs);
     }
-    storeSourceCheckoutRuntimeDepsCache({ cacheDir, installRoot });
+    const adoptedSourceCheckoutCache =
+      sourceCheckoutCacheStage &&
+      replaceNodeModulesDirWithSymlink(
+        path.join(installRoot, "node_modules"),
+        path.join(sourceCheckoutCacheStage, "node_modules"),
+      );
+    if (!adoptedSourceCheckoutCache) {
+      storeSourceCheckoutRuntimeDepsCache({ cacheDir, installRoot });
+    }
     return { installedSpecs: missingSpecs, retainSpecs: installSpecs };
   });
 }

@@ -8,6 +8,7 @@ import {
 } from "./bundled-runtime-deps.js";
 
 const bundledRuntimeDepsRetainSpecsByInstallRoot = new Map<string, readonly string[]>();
+const preparedBundledPluginRuntimeRoots = new Map<string, string>();
 
 export function isBuiltBundledPluginRuntimeRoot(pluginRoot: string): boolean {
   const extensionsDir = path.dirname(pluginRoot);
@@ -27,6 +28,21 @@ export function prepareBundledPluginRuntimeRoot(params: {
 }): { pluginRoot: string; modulePath: string } {
   const env = params.env ?? process.env;
   const installRoot = resolveBundledRuntimeDependencyInstallRoot(params.pluginRoot, { env });
+  const cacheKey = `${path.resolve(params.pluginRoot)}\u0000${path.resolve(installRoot)}`;
+  const cachedPluginRoot = preparedBundledPluginRuntimeRoots.get(cacheKey);
+  if (cachedPluginRoot) {
+    return {
+      pluginRoot: cachedPluginRoot,
+      modulePath:
+        cachedPluginRoot === params.pluginRoot
+          ? params.modulePath
+          : remapBundledPluginRuntimePath({
+              source: params.modulePath,
+              pluginRoot: params.pluginRoot,
+              mirroredRoot: cachedPluginRoot,
+            }),
+    };
+  }
   const retainSpecs = bundledRuntimeDepsRetainSpecsByInstallRoot.get(installRoot) ?? [];
   const depsInstallResult = ensureBundledPluginRuntimeDeps({
     pluginId: params.pluginId,
@@ -44,6 +60,7 @@ export function prepareBundledPluginRuntimeRoot(params: {
     params.logInstalled?.(depsInstallResult.installedSpecs);
   }
   if (path.resolve(installRoot) === path.resolve(params.pluginRoot)) {
+    preparedBundledPluginRuntimeRoots.set(cacheKey, params.pluginRoot);
     return { pluginRoot: params.pluginRoot, modulePath: params.modulePath };
   }
   const packageRoot = resolveBundledRuntimeDependencyPackageRoot(params.pluginRoot);
@@ -56,6 +73,7 @@ export function prepareBundledPluginRuntimeRoot(params: {
     pluginRoot: params.pluginRoot,
     installRoot,
   });
+  preparedBundledPluginRuntimeRoots.set(cacheKey, mirrorRoot);
   return {
     pluginRoot: mirrorRoot,
     modulePath: remapBundledPluginRuntimePath({

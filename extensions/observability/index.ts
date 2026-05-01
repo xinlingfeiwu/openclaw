@@ -49,6 +49,8 @@ type TraceState = {
 };
 
 const activeSessions = new Map<string, TraceState>();
+// Sessions where sampling decided NOT to trace — avoids re-rolling on every LLM call.
+const rejectedSessions = new Set<string>();
 
 export default definePluginEntry({
   id: "observability",
@@ -117,7 +119,12 @@ export default definePluginEntry({
       if (activeSessions.has(sessionKey)) {
         return activeSessions.get(sessionKey)!;
       }
+      // Memoize the "no" sampling decision so we don't re-roll on every LLM call.
+      if (rejectedSessions.has(sessionKey)) {
+        return null;
+      }
       if (!shouldSample()) {
+        rejectedSessions.add(sessionKey);
         return null;
       }
       const lf = await getLangfuse();
@@ -250,6 +257,8 @@ export default definePluginEntry({
     api.on("agent_end", async (event, ctx) => {
       const sessionKey = makeSessionKey(ctx);
       const session = activeSessions.get(sessionKey);
+      // Always clean up rejected-session tracking regardless of whether we traced.
+      rejectedSessions.delete(sessionKey);
       if (!session) {
         return;
       }

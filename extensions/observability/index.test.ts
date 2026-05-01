@@ -50,7 +50,8 @@ describe("observability", () => {
     });
     const mod = await import("./index.js");
     mod.default.register(api as never);
-    expect(hooks["before_agent_start"]).toBeDefined();
+    // No before_agent_start — trace is lazily opened on first model_call_started.
+    expect(hooks["before_agent_start"]).toBeUndefined();
     expect(hooks["model_call_started"]).toBeDefined();
     expect(hooks["model_call_ended"]).toBeDefined();
     expect(hooks["before_tool_call"]).toBeDefined();
@@ -64,7 +65,7 @@ describe("observability", () => {
     const { api, hooks } = makeMockApi({});
     const mod = await import("./index.js");
     mod.default.register(api as never);
-    expect(hooks["before_agent_start"]).toBeDefined();
+    expect(hooks["model_call_started"]).toBeDefined();
   });
 
   it("before_tool_call returns undefined (no blocking behavior)", async () => {
@@ -94,7 +95,7 @@ describe("observability", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("respects sampleRate=0 — before_agent_start returns without creating trace", async () => {
+  it("respects sampleRate=0 — model_call_started returns without creating trace", async () => {
     process.env["OPENCLAW_LANGFUSE_PUBLIC_KEY"] = "pk-lf-test";
     process.env["OPENCLAW_LANGFUSE_SECRET_KEY"] = "sk-lf-test";
     const { api, hooks } = makeMockApi({ sampleRate: 0 });
@@ -103,7 +104,7 @@ describe("observability", () => {
 
     // With sampleRate=0 all samples are skipped; should not throw
     await expect(
-      hooks["before_agent_start"]!({ runId: "r1", prompt: "hi" }, { sessionId: "s-sample" }),
+      hooks["model_call_started"]!({ callId: "c1", model: "gpt-5.4" }, { sessionId: "s-sample" }),
     ).resolves.toBeUndefined();
   });
 });

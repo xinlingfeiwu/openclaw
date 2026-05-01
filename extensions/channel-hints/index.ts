@@ -210,11 +210,13 @@ export default definePluginEntry({
         PLATFORM_HINTS[channelId];
 
       // Check if any Feishu channel skill binding matches this channelId.
+      // Guard: skip bindings with empty channelId (would match every session).
       const matchedBinding = skillBindings.find(
         (b) =>
-          channelId.includes(b.channelId) ||
-          b.channelId.includes(channelId) ||
-          normalized.includes(b.channelId.toLowerCase()),
+          b.channelId.trim() !== "" &&
+          (channelId.includes(b.channelId) ||
+            b.channelId.includes(channelId) ||
+            normalized.includes(b.channelId.toLowerCase())),
       );
 
       if (!hint && !matchedBinding) {

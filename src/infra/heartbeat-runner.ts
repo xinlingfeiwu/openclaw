@@ -120,6 +120,7 @@ export type HeartbeatDeps = OutboundSendDeps &
   };
 
 const log = createSubsystemLogger("gateway/heartbeat");
+const HEARTBEAT_STARTUP_MIN_DELAY_MS = 2 * 60_000;
 let heartbeatRunnerRuntimePromise: Promise<typeof import("./heartbeat-runner.runtime.js")> | null =
   null;
 
@@ -1423,7 +1424,12 @@ export function startHeartbeatRunner(opts: {
       });
       intervals.push(intervalMs);
       const prevState = prevAgents.get(agent.agentId);
-      const nextDueMs = resolveNextDue(now, intervalMs, phaseMs, prevState);
+      const nextDueMs = prevState
+        ? resolveNextDue(now, intervalMs, phaseMs, prevState)
+        : Math.max(
+            resolveNextDue(now, intervalMs, phaseMs),
+            now + Math.min(HEARTBEAT_STARTUP_MIN_DELAY_MS, intervalMs),
+          );
       nextAgents.set(agent.agentId, {
         agentId: agent.agentId,
         heartbeat: agent.heartbeat,

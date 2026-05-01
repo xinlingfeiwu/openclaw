@@ -7,6 +7,7 @@ import { requestHeartbeatNow, resetHeartbeatWakeStateForTests } from "./heartbea
 describe("startHeartbeatRunner", () => {
   type RunOnce = Parameters<typeof startHeartbeatRunner>[0]["runOnce"];
   const TEST_SCHEDULER_SEED = "heartbeat-runner-test-seed";
+  const HEARTBEAT_STARTUP_MIN_DELAY_MS = 2 * 60_000;
 
   function useFakeHeartbeatTime() {
     vi.useFakeTimers();
@@ -33,15 +34,18 @@ describe("startHeartbeatRunner", () => {
   }
 
   function resolveDueFromNow(nowMs: number, intervalMs: number, agentId: string) {
-    return computeNextHeartbeatPhaseDueMs({
-      nowMs,
-      intervalMs,
-      phaseMs: resolveHeartbeatPhaseMs({
-        schedulerSeed: TEST_SCHEDULER_SEED,
-        agentId,
+    return Math.max(
+      computeNextHeartbeatPhaseDueMs({
+        nowMs,
         intervalMs,
+        phaseMs: resolveHeartbeatPhaseMs({
+          schedulerSeed: TEST_SCHEDULER_SEED,
+          agentId,
+          intervalMs,
+        }),
       }),
-    });
+      nowMs + Math.min(HEARTBEAT_STARTUP_MIN_DELAY_MS, intervalMs),
+    );
   }
 
   function createRequestsInFlightRunSpy(skipCount: number) {

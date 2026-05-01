@@ -1,0 +1,34 @@
+{
+  "id": "skill-curator",
+  "name": "Skill Curator",
+  "description": "Autonomous skill library lifecycle management. Periodically reviews agent-created skills, transitions stale skills (30d unused) and archives long-dormant ones (90d). Injects audit guidance after idle periods. Never auto-deletes — only archives. Ported from hermes-agent/agent/curator.py.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "intervalDays": {
+        "type": "number",
+        "description": "Days between curator audit runs (default: 7)"
+      },
+      "staleAfterDays": {
+        "type": "number",
+        "description": "Mark a skill stale after N days without use (default: 30)"
+      },
+      "archiveAfterDays": {
+        "type": "number",
+        "description": "Move stale skill to .archive/ after N days (default: 90)"
+      },
+      "skillsDir": {
+        "type": "string",
+        "description": "Path to skills directory (default: ~/.openclaw/skills)"
+      }
+    }
+  },
+  "uiHints": {
+    "intervalDays": { "label": "Audit Interval (days)" },
+    "staleAfterDays": { "label": "Mark Stale After (days)" },
+    "archiveAfterDays": { "label": "Archive After (days)" },
+    "skillsDir": { "label": "Skills Directory" }
+  }
+}

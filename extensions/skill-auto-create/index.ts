@@ -1,3 +1,6 @@
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 const DEFAULT_TOOL_CALL_THRESHOLD = 5;
@@ -24,6 +27,60 @@ Include: a clear title, the approach in concise steps, any key commands or patte
 If a relevant skill already exists, update it with what was learned here.
 If nothing is worth saving, just say "Nothing to save." and stop.
 </skill_review>`;
+
+const MAX_EXISTING_SKILLS_SHOWN = 50;
+
+function resolveSkillsDir(dir: string | undefined): string {
+  const raw = typeof dir === "string" ? dir : "~/.openclaw/skills";
+  const expanded = raw.startsWith("~/") ? join(homedir(), raw.slice(2)) : raw;
+  const resolved = resolve(expanded);
+  const home = homedir();
+  if (resolved.startsWith(home + "/") || resolved === home) {
+    return resolved;
+  }
+  return join(home, ".openclaw", "skills");
+}
+
+function scanExistingSkillTitles(skillsDir: string): string[] {
+  try {
+    if (!existsSync(skillsDir)) {
+      return [];
+    }
+    const files = readdirSync(skillsDir).filter((f) => f.endsWith(".md") && !f.startsWith("."));
+    const titles: string[] = [];
+    for (const file of files.slice(0, MAX_EXISTING_SKILLS_SHOWN)) {
+      try {
+        const content = readFileSync(join(skillsDir, file), "utf8");
+        const firstLine = content.split("\n")[0]?.trim() ?? "";
+        const title = firstLine.startsWith("# ")
+          ? firstLine.slice(2).trim()
+          : file.replace(/\.md$/, "");
+        titles.push(title);
+      } catch {
+        // skip unreadable files
+      }
+    }
+    return titles;
+  } catch {
+    return [];
+  }
+}
+
+function buildSkillPrompt(basePrompt: string, existingTitles: string[]): string {
+  if (existingTitles.length === 0) {
+    return basePrompt;
+  }
+  const dedupeHint =
+    `\n\nExisting skills (titles only — avoid duplicates; update an existing skill if relevant):\n` +
+    existingTitles.map((t) => `- ${t}`).join("\n");
+  // Insert the dedup hint before the closing </skill_review> tag.
+  const closingTag = "</skill_review>";
+  const closingIdx = basePrompt.lastIndexOf(closingTag);
+  if (closingIdx === -1) {
+    return basePrompt + dedupeHint;
+  }
+  return basePrompt.slice(0, closingIdx).trimEnd() + dedupeHint + "\n" + closingTag;
+}
 
 type SkillAutoCreateConfig = {
   enabled?: boolean;
@@ -112,7 +169,11 @@ export default definePluginEntry({
         `skill-auto-create: injecting skill creation prompt (${state.toolCallCount} tool calls in session ${sessionId}, tools: ${[...state.toolNames].join(",")})`,
       );
 
-      return { prependContext: SKILL_CREATION_PROMPT };
+      const skillsDir = resolveSkillsDir(cfg.skillsDir);
+      const existingTitles = scanExistingSkillTitles(skillsDir);
+      const prompt = buildSkillPrompt(SKILL_CREATION_PROMPT, existingTitles);
+
+      return { prependContext: prompt };
     });
 
     // Clean up per-session state when session ends to prevent unbounded map growth.

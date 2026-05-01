@@ -1,0 +1,39 @@
+{
+  "id": "observability",
+  "name": "Observability (Langfuse)",
+  "description": "Traces OpenClaw conversations, LLM calls, and tool usage to Langfuse. Requires the 'langfuse' npm package and credentials. Fail-open: if the SDK is missing or credentials are not configured, all hooks are inert. Inspired by hermes-agent/plugins/observability/langfuse.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "publicKey": {
+        "type": "string",
+        "description": "Langfuse project public key (pk-lf-...). Also reads OPENCLAW_LANGFUSE_PUBLIC_KEY env var."
+      },
+      "secretKey": {
+        "type": "string",
+        "description": "Langfuse project secret key (sk-lf-...). Also reads OPENCLAW_LANGFUSE_SECRET_KEY env var."
+      },
+      "baseUrl": {
+        "type": "string",
+        "description": "Langfuse server URL (default: https://cloud.langfuse.com). Also reads OPENCLAW_LANGFUSE_BASE_URL env var."
+      },
+      "sampleRate": {
+        "type": "number",
+        "description": "Fraction of sessions to trace, 0.0–1.0 (default: 1.0)"
+      },
+      "maxChars": {
+        "type": "number",
+        "description": "Maximum characters per traced field to prevent oversized payloads (default: 12000)"
+      }
+    }
+  },
+  "uiHints": {
+    "publicKey": { "label": "Langfuse Public Key" },
+    "secretKey": { "label": "Langfuse Secret Key", "secret": true },
+    "baseUrl": { "label": "Langfuse Base URL" },
+    "sampleRate": { "label": "Sample Rate (0.0–1.0)" },
+    "maxChars": { "label": "Max Field Length (chars)" }
+  }
+}

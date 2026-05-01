@@ -8,8 +8,22 @@ import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 const INVISIBLE_UNICODE_REGEX =
   /\u200B|\u200C|\u200D|\u2060|\uFEFF|\u202A|\u202B|\u202C|\u202D|\u202E/;
 
+// Hardline patterns — maximum risk operations that always require approval,
+// regardless of approval history. These are pre-compiled at module load.
+const HARDLINE_PATTERNS: RegExp[] = [
+  /\bdd\s+if=/i, // disk-level write (can wipe a drive)
+  />\s*\/dev\/(sda|nvme|disk\d)/i, // direct device write
+  /:\(\)\s*\{.*?:\|:&\s*\};:/s, // bash fork bomb
+  /\brm\s+-[rRfF]{0,2}f[rRfF]{0,2}\s+\//i, // rm -rf /  (recursive root delete)
+  /\bformat\s+[a-z]:/i, // Windows drive format
+  /\bshred\s+.*\/dev\//i, // shred a block device
+  /\bwipefs\b/i, // partition table wipe
+  /\bmkfs\b/i, // make filesystem (destructive)
+];
+
 // Patterns considered dangerous defaults requiring approval.
 // Organized by category, aligned with hermes tools/approval.py (30+ patterns).
+// Pre-compiled at module load for performance.
 const DEFAULT_DANGEROUS_PATTERNS = [
   // File system destruction
   /\brm\s+-[rRfF]{1,3}\s/i,
@@ -297,6 +311,26 @@ export default definePluginEntry({
       const cmdStr = extractCommandString(params);
       if (!cmdStr) {
         return undefined;
+      }
+
+      // Hardline check: highest-risk commands always require approval, bypass is never saved.
+      if (isDangerous(cmdStr, HARDLINE_PATTERNS)) {
+        api.logger.warn?.(
+          `smart-approvals: hardline pattern matched in "${cmdStr.slice(0, 60)}" — always requiring approval`,
+        );
+        return {
+          requireApproval: {
+            title: `⛔ Hardline dangerous command`,
+            description:
+              `Command: \`${cmdStr.slice(0, 100)}\`\n\n` +
+              `This matches a hardline dangerous pattern and **cannot be auto-approved** based on history. ` +
+              `This operation may be irreversible (disk wipe, fork bomb, recursive delete, etc.). Allow?`,
+            severity: "critical" as const,
+            timeoutMs: 30_000,
+            timeoutBehavior: "deny" as const,
+            // Intentionally no onResolution — hardline approvals are never saved to history.
+          },
+        };
       }
 
       // Invisible Unicode in command → always flag, don't silently allow

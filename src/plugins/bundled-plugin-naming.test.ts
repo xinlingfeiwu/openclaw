@@ -36,10 +36,13 @@ const DIR_ID_EXCEPTIONS = new Map<string, string>([
 const FORK_PACKAGE_EXCEPTIONS = new Set<string>([
   "checkpoint-rollback",
   "cron-silent-filter",
+  "observability",
   "process-monitor",
   "rate-limit-guard",
+  "skill-curator",
   "skill-yaml-validator",
   "subdirectory-hints",
+  "tool-loop-guard",
 ]);
 const ALLOWED_PACKAGE_SUFFIXES = [
   "",

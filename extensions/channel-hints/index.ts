@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 import { definePluginEntry, type OpenClawPluginApi } from "./api.js";
 
 // ============================================================
@@ -134,10 +137,26 @@ Images, videos, and documents are sent as native attachments. Keep messages conc
 use formatting to improve readability.`,
 };
 
+const MAX_SKILL_CHARS = 4_000;
+
+type FeishuChannelSkillBinding = {
+  /** Feishu channel ID or partial match string (e.g. "feishu[finance]" or "finance") */
+  channelId: string;
+  /** Skill file basenames to inject, e.g. ["financial-analysis.md"] */
+  skills: string[];
+  /** Directory to look for skill files. Defaults to ~/.openclaw/skills */
+  skillsDir?: string;
+};
+
 type ChannelHintsConfig = {
   enabled?: boolean;
   /** Custom channel hints to add or override built-in hints. Key = channelId. */
   customHints?: Record<string, string>;
+  /**
+   * Per-Feishu-channel skill bindings. When channelId matches, the listed skill
+   * files are read and injected as system context for that channel.
+   */
+  feishuChannelSkillBindings?: FeishuChannelSkillBinding[];
 };
 
 export default definePluginEntry({
@@ -154,6 +173,9 @@ export default definePluginEntry({
 
     const rawCustomHints =
       typeof cfg.customHints === "object" && cfg.customHints !== null ? cfg.customHints : {};
+    const skillBindings: FeishuChannelSkillBinding[] = Array.isArray(cfg.feishuChannelSkillBindings)
+      ? cfg.feishuChannelSkillBindings
+      : [];
 
     // Validate custom hints for obvious injection patterns at registration time
     const CUSTOM_HINT_INJECTION_RE =
@@ -187,12 +209,66 @@ export default definePluginEntry({
         PLATFORM_HINTS[normalized] ??
         PLATFORM_HINTS[channelId];
 
-      if (!hint) {
+      // Check if any Feishu channel skill binding matches this channelId.
+      const matchedBinding = skillBindings.find(
+        (b) =>
+          channelId.includes(b.channelId) ||
+          b.channelId.includes(channelId) ||
+          normalized.includes(b.channelId.toLowerCase()),
+      );
+
+      if (!hint && !matchedBinding) {
         return undefined;
       }
 
-      api.logger.info?.(`channel-hints: injecting hint for channel=${channelId}`);
-      return { prependSystemContext: hint };
+      const contextParts: string[] = [];
+
+      if (matchedBinding && Array.isArray(matchedBinding.skills)) {
+        const defaultSkillsDir = join(homedir(), ".openclaw", "skills");
+        const rawDir =
+          typeof matchedBinding.skillsDir === "string"
+            ? matchedBinding.skillsDir
+            : defaultSkillsDir;
+        const expandedDir = rawDir.startsWith("~/") ? join(homedir(), rawDir.slice(2)) : rawDir;
+        const resolvedDir = resolve(expandedDir);
+        const skillsDir =
+          resolvedDir.startsWith(homedir() + "/") || resolvedDir === homedir()
+            ? resolvedDir
+            : defaultSkillsDir;
+
+        for (const skillFile of matchedBinding.skills) {
+          const skillPath = join(
+            skillsDir,
+            skillFile.endsWith(".md") ? skillFile : `${skillFile}.md`,
+          );
+          try {
+            if (existsSync(skillPath)) {
+              const content = readFileSync(skillPath, "utf8").slice(0, MAX_SKILL_CHARS);
+              contextParts.push(`\n\n--- Skill: ${skillFile} ---\n${content}`);
+              api.logger.info?.(
+                `channel-hints: injected skill "${skillFile}" for channel=${channelId}`,
+              );
+            } else {
+              api.logger.warn?.(`channel-hints: skill file not found: ${skillPath}`);
+            }
+          } catch (e) {
+            api.logger.warn?.(`channel-hints: failed to read skill "${skillFile}": ${String(e)}`);
+          }
+        }
+      }
+
+      if (hint) {
+        api.logger.info?.(`channel-hints: injecting hint for channel=${channelId}`);
+      }
+
+      const result: { prependSystemContext?: string; appendContext?: string } = {};
+      if (hint) {
+        result.prependSystemContext = hint;
+      }
+      if (contextParts.length > 0) {
+        result.appendContext = contextParts.join("");
+      }
+      return Object.keys(result).length > 0 ? result : undefined;
     });
   },
 });

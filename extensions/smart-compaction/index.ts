@@ -61,6 +61,8 @@ type SmartCompactionConfig = {
 type SessionState = {
   lastCompactionAt: number;
   messageCountAtLastCompaction: number;
+  poorCompactionWarningPending: boolean;
+  lastCompactionRatio?: number;
 };
 
 // Per-session in-memory state (keyed by sessionId or agentId)
@@ -92,21 +94,53 @@ export default definePluginEntry({
 
     // Inject structured 13-section compaction template via system prompt
     if (injectTemplate) {
-      api.on("before_prompt_build", (_event, _ctx) => {
-        return { appendSystemContext: `\n\n${COMPACTION_TEMPLATE_GUIDANCE}\n` };
+      api.on("before_prompt_build", (_event, ctx) => {
+        const key =
+          (ctx as { sessionId?: string }).sessionId ??
+          (ctx as { agentId?: string }).agentId ??
+          "default";
+        const state = sessionState.get(key);
+
+        let extra = "";
+        if (state?.poorCompactionWarningPending) {
+          state.poorCompactionWarningPending = false;
+          const pct =
+            state.lastCompactionRatio !== undefined
+              ? `${(state.lastCompactionRatio * 100).toFixed(0)}%`
+              : "very few";
+          extra =
+            `\n\n[Smart Compaction] The last compaction was ineffective (only ${pct} of messages were reduced). ` +
+            `If the context feels noisy or confused, consider using /reset to start a fresh session.`;
+        }
+
+        return { appendSystemContext: `\n\n${COMPACTION_TEMPLATE_GUIDANCE}${extra}\n` };
       });
     }
 
     api.on("after_compaction", async (ev, ctx) => {
-      const event = ev as { messageCount?: number };
+      const event = ev as { messageCount?: number; compactedCount?: number };
       const key =
         (ctx as { sessionId?: string }).sessionId ??
         (ctx as { agentId?: string }).agentId ??
         "default";
+
+      const messageCount = event.messageCount ?? 0;
+      const compactedCount = event.compactedCount ?? 0;
+      const ratio = messageCount > 0 ? compactedCount / messageCount : 1;
+
       sessionState.set(key, {
         lastCompactionAt: Date.now(),
-        messageCountAtLastCompaction: event.messageCount ?? 0,
+        messageCountAtLastCompaction: messageCount,
+        poorCompactionWarningPending: ratio < 0.2 && messageCount >= 10,
+        lastCompactionRatio: ratio,
       });
+
+      if (ratio < 0.2 && messageCount >= 10) {
+        api.logger.info?.(
+          `smart-compaction: low effectiveness ratio ${(ratio * 100).toFixed(0)}% ` +
+            `(${compactedCount}/${messageCount} messages reduced) — will suggest /reset`,
+        );
+      }
     });
 
     api.on("before_compaction", async (ev, ctx) => {

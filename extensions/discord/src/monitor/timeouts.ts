@@ -1,19 +1,15 @@
-const MAX_DISCORD_TIMEOUT_MS = 2_147_483_647;
-
+// Compatibility constants for existing imports. Discord no longer enforces
+// channel-owned listener or inbound run timeouts.
 export const DISCORD_DEFAULT_LISTENER_TIMEOUT_MS = 120_000;
 export const DISCORD_DEFAULT_INBOUND_WORKER_TIMEOUT_MS = 30 * 60_000;
+
 export const DISCORD_ATTACHMENT_IDLE_TIMEOUT_MS = 60_000;
 export const DISCORD_ATTACHMENT_TOTAL_TIMEOUT_MS = 120_000;
 
+const MAX_DISCORD_TIMEOUT_MS = 2_147_483_647;
+
 function clampDiscordTimeoutMs(timeoutMs: number, minimumMs: number): number {
   return Math.max(minimumMs, Math.min(Math.floor(timeoutMs), MAX_DISCORD_TIMEOUT_MS));
-}
-
-export function normalizeDiscordListenerTimeoutMs(raw: number | undefined): number {
-  if (!Number.isFinite(raw) || (raw ?? 0) <= 0) {
-    return DISCORD_DEFAULT_LISTENER_TIMEOUT_MS;
-  }
-  return clampDiscordTimeoutMs(raw!, 1_000);
 }
 
 export function normalizeDiscordInboundWorkerTimeoutMs(
@@ -67,6 +63,51 @@ export function mergeAbortSignals(
   return fallbackController.signal;
 }
 
+export async function raceWithTimeout<T, U>(params: {
+  promise: Promise<T>;
+  timeoutMs: number;
+  onTimeout: () => U;
+}): Promise<T | U> {
+  let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<U>((resolve) => {
+    timeoutTimer = setTimeout(() => resolve(params.onTimeout()), Math.max(1, params.timeoutMs));
+    timeoutTimer.unref?.();
+  });
+  try {
+    return await Promise.race([params.promise, timeoutPromise]);
+  } finally {
+    if (timeoutTimer) {
+      clearTimeout(timeoutTimer);
+    }
+  }
+}
+
+export async function withAbortTimeout<T>(params: {
+  timeoutMs: number;
+  createTimeoutError: () => Error;
+  run: (signal: AbortSignal) => Promise<T>;
+}): Promise<T> {
+  const controller = new AbortController();
+  let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutTimer = setTimeout(
+      () => {
+        controller.abort();
+        reject(params.createTimeoutError());
+      },
+      Math.max(1, params.timeoutMs),
+    );
+    timeoutTimer.unref?.();
+  });
+  try {
+    return await Promise.race([params.run(controller.signal), timeoutPromise]);
+  } finally {
+    if (timeoutTimer) {
+      clearTimeout(timeoutTimer);
+    }
+  }
+}
+
 export async function runDiscordTaskWithTimeout(params: {
   run: (abortSignal: AbortSignal | undefined) => Promise<void>;
   timeoutMs?: number;
@@ -94,29 +135,24 @@ export async function runDiscordTaskWithTimeout(params: {
     params.onErrorAfterTimeout?.(error);
   });
 
-  try {
-    if (!params.timeoutMs) {
-      await runPromise;
-      return false;
-    }
-    const timeoutPromise = new Promise<"timeout">((resolve) => {
-      timeoutHandle = setTimeout(() => resolve("timeout"), params.timeoutMs);
-      timeoutHandle.unref?.();
-    });
-    const result = await Promise.race([
-      runPromise.then(() => "completed" as const),
-      timeoutPromise,
-    ]);
-    if (result === "timeout") {
-      timedOut = true;
-      timeoutAbortController?.abort();
-      await params.onTimeout(params.timeoutMs);
-      return true;
-    }
+  if (!params.timeoutMs) {
+    await runPromise;
     return false;
-  } finally {
-    if (timeoutHandle) {
-      clearTimeout(timeoutHandle);
-    }
   }
+
+  const timeoutPromise = new Promise<"timeout">((resolve) => {
+    timeoutHandle = setTimeout(() => resolve("timeout"), params.timeoutMs);
+    timeoutHandle.unref?.();
+  });
+  const result = await Promise.race([
+    runPromise.then(() => "completed" as const),
+    timeoutPromise,
+  ]);
+  if (result === "timeout") {
+    timedOut = true;
+    timeoutAbortController?.abort();
+    await params.onTimeout(params.timeoutMs);
+    return true;
+  }
+  return false;
 }

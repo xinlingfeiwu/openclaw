@@ -1051,6 +1051,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/observability:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/ollama:
     dependencies:
       '@mariozechner/pi-ai':
@@ -1257,6 +1263,12 @@ importers:
 
   extensions/skill-auto-create: {}
 
+  extensions/skill-curator:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/skill-security-scan: {}
 
   extensions/skill-workshop:
@@ -1417,6 +1429,12 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/tool-loop-guard:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/tool-output-truncation: {}
 

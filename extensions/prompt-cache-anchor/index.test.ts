@@ -30,7 +30,7 @@ describe("prompt-cache-anchor", () => {
 
     const result = await api._trigger("before_prompt_build", {}, {});
     expect((result as { appendSystemContext: string }).appendSystemContext).toBe(
-      "<!-- openclaw:system-context-boundary -->",
+      "<!-- openclaw:system-context-boundary --> <!-- cache-ttl:5m -->",
     );
   });
 
@@ -41,7 +41,7 @@ describe("prompt-cache-anchor", () => {
 
     const result = await api._trigger("before_prompt_build", {}, {});
     expect((result as { appendSystemContext: string }).appendSystemContext).toBe(
-      "## END_SYSTEM_PROMPT",
+      "## END_SYSTEM_PROMPT <!-- cache-ttl:5m -->",
     );
   });
 

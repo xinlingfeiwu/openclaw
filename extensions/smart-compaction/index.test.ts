@@ -4,6 +4,7 @@ function buildApi(config: Record<string, unknown> = {}) {
   const handlers: Record<string, ((ev: unknown, ctx: unknown) => unknown)[]> = {};
   return {
     pluginConfig: config,
+    logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
     on(name: string, fn: (ev: unknown, ctx: unknown) => unknown) {
       handlers[name] ??= [];
       handlers[name].push(fn);
@@ -54,11 +55,7 @@ describe("smart-compaction", () => {
     await api._trigger("after_compaction", { messageCount: 100 }, ctx("sess-msg"));
 
     // Only 3 new messages since last compaction
-    const result = await api._trigger(
-      "before_compaction",
-      { messageCount: 103 },
-      ctx("sess-msg"),
-    );
+    const result = await api._trigger("before_compaction", { messageCount: 103 }, ctx("sess-msg"));
     expect((result as { skip?: boolean })?.skip).toBe(true);
     expect((result as { skipReason?: string })?.skipReason).toMatch(/too few/);
   });

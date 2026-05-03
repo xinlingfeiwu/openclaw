@@ -316,6 +316,20 @@ For the plugin authoring guide, see [Plugin SDK overview](/plugins/sdk-overview)
     | `plugin-sdk/memory-host-status` | Vendor-neutral alias for memory host status helpers |
   </Accordion>
 
+  <Accordion title="Fork plugin facades">
+    | Subpath | Key exports |
+    | --- | --- |
+    | `plugin-sdk/channel-hints` | Channel hints plugin entry surface |
+    | `plugin-sdk/observability` | Observability plugin entry surface for LLM call tracing and Langfuse integration |
+    | `plugin-sdk/prompt-cache-anchor` | Prompt cache anchor plugin entry surface for deterministic cache positioning |
+    | `plugin-sdk/rate-limit-guard` | Rate limit guard plugin entry surface for provider rate-limiting protection |
+    | `plugin-sdk/skill-auto-create` | Skill auto-create plugin entry surface for automatic skill generation from agent interactions |
+    | `plugin-sdk/skill-curator` | Skill curator plugin entry surface for skill lifecycle management and cleanup |
+    | `plugin-sdk/smart-approvals` | Smart approvals plugin entry surface for human-in-the-loop approval workflows |
+    | `plugin-sdk/smart-compaction` | Smart compaction plugin entry surface for context window management |
+    | `plugin-sdk/tool-loop-guard` | Tool loop guard plugin entry surface for detecting and breaking tool execution loops |
+  </Accordion>
+
   <Accordion title="Reserved bundled-helper subpaths">
     There are currently no reserved bundled-helper SDK subpaths. Owner-specific
     helpers live inside the owning plugin package, while reusable host contracts

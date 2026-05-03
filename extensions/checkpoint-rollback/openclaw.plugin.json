@@ -1,0 +1,29 @@
+{
+  "id": "checkpoint-rollback",
+  "name": "Checkpoint & Rollback",
+  "description": "Before destructive file operations (edit, delete, overwrite), saves the original content to ~/.openclaw/checkpoints/ so you can manually restore if needed.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "checkpointsDir": {
+        "type": "string",
+        "description": "Directory to save checkpoints (default: ~/.openclaw/checkpoints)"
+      },
+      "maxCheckpointsPerSession": {
+        "type": "number",
+        "description": "Max checkpoints to save per session (default: 50)"
+      },
+      "watchTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Tool names to checkpoint before execution (default: str_replace_based_edit_tool, write_file, create_file, edit, create)"
+      }
+    }
+  },
+  "uiHints": {
+    "checkpointsDir": { "label": "Checkpoints Directory" },
+    "maxCheckpointsPerSession": { "label": "Max Checkpoints Per Session" }
+  }
+}

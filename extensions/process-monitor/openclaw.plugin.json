@@ -1,0 +1,20 @@
+{
+  "id": "process-monitor",
+  "name": "Process Monitor",
+  "description": "Tracks long-running background processes started by the agent (bash commands) and injects status summaries into the agent context.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "maxTracked": {
+        "type": "number",
+        "description": "Max processes to track per session (default: 20)"
+      },
+      "longRunningThresholdMs": {
+        "type": "number",
+        "description": "Tool calls longer than this (ms) are flagged as long-running (default: 5000)"
+      }
+    }
+  }
+}

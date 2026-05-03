@@ -1,0 +1,52 @@
+{
+  "id": "tool-loop-guard",
+  "name": "Tool Loop Guard",
+  "description": "Detects agent tool-call loops: repeated identical failures, same-tool no-progress, and general no-progress cycles. Warning-first by default (warns via system context); hard-stop opt-in. Complements rate-limit-guard (which handles 429s). Ported from hermes-agent/agent/tool_guardrails.py.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "warningsEnabled": {
+        "type": "boolean",
+        "description": "Inject warning context when loop thresholds are reached (default: true)"
+      },
+      "hardStopEnabled": {
+        "type": "boolean",
+        "description": "Block the tool call when hard-stop thresholds are reached (default: false)"
+      },
+      "exactFailureWarnAfter": {
+        "type": "number",
+        "description": "Warn after N consecutive exact-same-call failures (default: 2)"
+      },
+      "exactFailureBlockAfter": {
+        "type": "number",
+        "description": "Hard-stop after N consecutive exact-same-call failures, requires hardStopEnabled (default: 5)"
+      },
+      "sameToolFailureWarnAfter": {
+        "type": "number",
+        "description": "Warn after N same-tool failures in a turn (default: 3)"
+      },
+      "sameToolFailureHaltAfter": {
+        "type": "number",
+        "description": "Hard-stop after N same-tool failures, requires hardStopEnabled (default: 8)"
+      },
+      "noProgressWarnAfter": {
+        "type": "number",
+        "description": "Warn after N tool calls with no apparent progress (default: 2)"
+      },
+      "noProgressBlockAfter": {
+        "type": "number",
+        "description": "Hard-stop after N no-progress tool calls, requires hardStopEnabled (default: 5)"
+      }
+    }
+  },
+  "uiHints": {
+    "warningsEnabled": { "label": "Enable Warnings" },
+    "hardStopEnabled": { "label": "Enable Hard Stop" },
+    "exactFailureWarnAfter": { "label": "Exact Failure Warn After (calls)" },
+    "exactFailureBlockAfter": { "label": "Exact Failure Block After (calls)" },
+    "sameToolFailureWarnAfter": { "label": "Same-Tool Failure Warn After (calls)" },
+    "sameToolFailureHaltAfter": { "label": "Same-Tool Failure Halt After (calls)" }
+  }
+}

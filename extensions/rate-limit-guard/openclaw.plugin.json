@@ -1,0 +1,24 @@
+{
+  "id": "rate-limit-guard",
+  "name": "Rate Limit Guard",
+  "description": "Cross-session 429 rate-limit state tracking. Detects rate limit errors in tool calls and session errors, writes cooldown state to ~/.openclaw/rate_limits/{provider}.json (atomic writes), and injects a warning into the system prompt when a provider is still in cooldown. Prevents retry amplification. Ported from hermes-agent/agent/nous_rate_guard.py.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "cooldownMs": {
+        "type": "number",
+        "description": "Default cooldown duration in milliseconds when no reset header is available (default: 300000 = 5 minutes)"
+      },
+      "rateLimitsDir": {
+        "type": "string",
+        "description": "Directory to store rate limit state files (default: ~/.openclaw/rate_limits)"
+      }
+    }
+  },
+  "uiHints": {
+    "cooldownMs": { "label": "Default Cooldown (ms)" },
+    "rateLimitsDir": { "label": "Rate Limits State Directory" }
+  }
+}

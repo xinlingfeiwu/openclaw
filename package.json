@@ -107,9 +107,21 @@
       "types": "./dist/plugin-sdk/lmstudio-runtime.d.ts",
       "default": "./dist/plugin-sdk/lmstudio-runtime.js"
     },
+    "./plugin-sdk/observability": {
+      "types": "./dist/plugin-sdk/observability.d.ts",
+      "default": "./dist/plugin-sdk/observability.js"
+    },
+    "./plugin-sdk/prompt-cache-anchor": {
+      "types": "./dist/plugin-sdk/prompt-cache-anchor.d.ts",
+      "default": "./dist/plugin-sdk/prompt-cache-anchor.js"
+    },
     "./plugin-sdk/provider-setup": {
       "types": "./dist/plugin-sdk/provider-setup.d.ts",
       "default": "./dist/plugin-sdk/provider-setup.js"
+    },
+    "./plugin-sdk/rate-limit-guard": {
+      "types": "./dist/plugin-sdk/rate-limit-guard.d.ts",
+      "default": "./dist/plugin-sdk/rate-limit-guard.js"
     },
     "./plugin-sdk/sandbox": {
       "types": "./dist/plugin-sdk/sandbox.d.ts",
@@ -194,6 +206,10 @@
     "./plugin-sdk/approval-handler-runtime": {
       "types": "./dist/plugin-sdk/approval-handler-runtime.d.ts",
       "default": "./dist/plugin-sdk/approval-handler-runtime.js"
+    },
+    "./plugin-sdk/channel-hints": {
+      "types": "./dist/plugin-sdk/channel-hints.d.ts",
+      "default": "./dist/plugin-sdk/channel-hints.js"
     },
     "./plugin-sdk/channel-runtime-context": {
       "types": "./dist/plugin-sdk/channel-runtime-context.d.ts",
@@ -339,9 +355,29 @@
       "types": "./dist/plugin-sdk/secure-random-runtime.d.ts",
       "default": "./dist/plugin-sdk/secure-random-runtime.js"
     },
+    "./plugin-sdk/skill-auto-create": {
+      "types": "./dist/plugin-sdk/skill-auto-create.d.ts",
+      "default": "./dist/plugin-sdk/skill-auto-create.js"
+    },
+    "./plugin-sdk/skill-curator": {
+      "types": "./dist/plugin-sdk/skill-curator.d.ts",
+      "default": "./dist/plugin-sdk/skill-curator.js"
+    },
+    "./plugin-sdk/smart-approvals": {
+      "types": "./dist/plugin-sdk/smart-approvals.d.ts",
+      "default": "./dist/plugin-sdk/smart-approvals.js"
+    },
+    "./plugin-sdk/smart-compaction": {
+      "types": "./dist/plugin-sdk/smart-compaction.d.ts",
+      "default": "./dist/plugin-sdk/smart-compaction.js"
+    },
     "./plugin-sdk/system-event-runtime": {
       "types": "./dist/plugin-sdk/system-event-runtime.d.ts",
       "default": "./dist/plugin-sdk/system-event-runtime.js"
+    },
+    "./plugin-sdk/tool-loop-guard": {
+      "types": "./dist/plugin-sdk/tool-loop-guard.d.ts",
+      "default": "./dist/plugin-sdk/tool-loop-guard.js"
     },
     "./plugin-sdk/transport-ready-runtime": {
       "types": "./dist/plugin-sdk/transport-ready-runtime.d.ts",

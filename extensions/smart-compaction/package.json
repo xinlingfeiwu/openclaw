@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/smart-compaction",
+  "version": "2026.4.14",
+  "private": true,
+  "description": "Anti-thrash compaction guard: skips compaction if one ran recently within the cooldown window",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

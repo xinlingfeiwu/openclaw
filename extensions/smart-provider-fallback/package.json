@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/smart-provider-fallback",
+  "version": "2026.4.17",
+  "private": true,
+  "description": "Tracks per-provider failure rates and automatically switches to a fallback provider when failures spike",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

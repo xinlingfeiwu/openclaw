@@ -11,14 +11,23 @@ export const reservedBundledPluginSdkEntrypoints = [] as const;
 // Supported SDK facades backed by bundled plugins. These are intentionally public
 // until they move to generic, plugin-neutral contracts.
 export const supportedBundledFacadeSdkEntrypoints = [
+  "channel-hints",
   "discord",
   "lmstudio",
   "lmstudio-runtime",
   "matrix",
   "mattermost",
   "memory-core-engine-runtime",
+  "observability",
+  "prompt-cache-anchor",
   "qa-runner-runtime",
+  "rate-limit-guard",
+  "skill-auto-create",
+  "skill-curator",
+  "smart-approvals",
+  "smart-compaction",
   "telegram-account",
+  "tool-loop-guard",
   "tts-runtime",
   "zalouser",
 ] as const;

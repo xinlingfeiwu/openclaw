@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/usage-tracker",
+  "version": "2026.4.17",
+  "private": true,
+  "description": "Tracks daily token usage per provider/model and auto-switches provider when budget is exceeded",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

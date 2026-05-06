@@ -1,0 +1,22 @@
+{
+  "id": "file-safety-guard",
+  "name": "File Safety Guard",
+  "description": "Blocks AI agent writes to sensitive files: SSH credentials, shell configs (.bashrc/.zshrc), cloud credentials (.aws, .kube, .gnupg, .azure), system files (/etc/sudoers, /etc/passwd), and device paths. Ported from hermes tools/file_operations.py WRITE_DENIED_PATHS.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "additionalDeniedPaths": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Additional exact file paths to deny writes to (~ is expanded)"
+      },
+      "additionalDeniedPrefixes": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Additional directory prefixes whose entire subtrees are write-protected"
+      }
+    }
+  }
+}

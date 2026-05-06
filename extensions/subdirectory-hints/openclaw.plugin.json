@@ -1,0 +1,29 @@
+{
+  "id": "subdirectory-hints",
+  "name": "Subdirectory Hints",
+  "description": "Lazy AGENTS.md/CLAUDE.md context injection during file navigation. When the agent reads a file in a subdirectory, automatically discovers and silently appends AGENTS.md, CLAUDE.md, or .cursorrules from that directory and its ancestors (up to 5 levels). Deduplicates across a session to avoid repeated injection. Ported from hermes-agent/tools/subdirectory_hints.py.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "maxDepth": {
+        "type": "number",
+        "description": "Max ancestor levels to walk when looking for context files (default: 5)"
+      },
+      "maxContextChars": {
+        "type": "number",
+        "description": "Max characters to inject from a single context file (default: 8000)"
+      },
+      "fileReadTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Tool names to intercept for subdirectory context discovery (default: read_file, view, cat, read, str_replace_editor)"
+      }
+    }
+  },
+  "uiHints": {
+    "maxDepth": { "label": "Max Ancestor Depth" },
+    "maxContextChars": { "label": "Max Context Characters" }
+  }
+}

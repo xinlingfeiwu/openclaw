@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/smart-router",
+  "version": "2026.4.14",
+  "private": true,
+  "description": "Smart model routing: cheap model for simple queries, primary model for complex ones",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

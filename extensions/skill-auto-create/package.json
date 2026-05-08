@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/skill-auto-create",
+  "version": "2026.4.14",
+  "private": true,
+  "description": "Auto-creates skill files after complex tool sessions",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

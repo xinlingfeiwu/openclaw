@@ -1,0 +1,16 @@
+{
+  "id": "think-block-filter",
+  "name": "Think Block Filter",
+  "description": "Strips model reasoning scratchpad blocks (<think>, <THINKING>, <reasoning>, <REASONING_SCRATCHPAD>, <thought>) from agent replies before delivery, keeping responses clean.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "placeholder": {
+        "type": "string",
+        "description": "Text to replace stripped blocks with (default: empty string — silent removal)"
+      }
+    }
+  }
+}

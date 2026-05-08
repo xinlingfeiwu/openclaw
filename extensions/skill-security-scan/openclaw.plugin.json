@@ -1,0 +1,21 @@
+{
+  "id": "skill-security-scan",
+  "name": "Skill Security Scan",
+  "description": "Scans skill files being written for prompt injection patterns and data exfiltration attempts (Phase 1C from hermes-agent integration).",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "blockOnThreat": {
+        "type": "boolean",
+        "description": "Block the write if a threat is detected (default: false — warn only)"
+      },
+      "scanPaths": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Path prefixes to scan (default: ~/.openclaw/skills)"
+      }
+    }
+  }
+}

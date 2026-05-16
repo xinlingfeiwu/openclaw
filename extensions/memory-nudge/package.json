@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/memory-nudge",
+  "version": "2026.4.14",
+  "private": true,
+  "description": "Periodically reminds the agent to save useful information to memory",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

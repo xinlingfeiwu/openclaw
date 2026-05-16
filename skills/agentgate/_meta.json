@@ -1,0 +1,17 @@
+{
+  "owner": "monteslu",
+  "slug": "agentgate",
+  "displayName": "Agentgate Clawhub",
+  "latest": {
+    "version": "1.0.4",
+    "publishedAt": 1771550356958,
+    "commit": "https://github.com/openclaw/skills/commit/906ec3b7ae502f342237aae3f80f701a9a703852"
+  },
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1771543607578,
+      "commit": "https://github.com/openclaw/skills/commit/5c2d4284f83530db5b8978c50be99dee22b348f6"
+    }
+  ]
+}

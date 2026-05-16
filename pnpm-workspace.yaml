@@ -45,6 +45,8 @@ minimumReleaseAgeExclude:
   - "rolldown"
   - "sqlite-vec"
   - "sqlite-vec-*"
+  - "undici"
+  - "@aws-sdk/*"
 
 nodeLinker: hoisted
 blockExoticSubdeps: true

@@ -454,6 +454,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/channel-hints: {}
+
+  extensions/checkpoint-rollback:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/chutes:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -510,11 +518,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/context-fence: {}
+
   extensions/copilot-proxy:
     devDependencies:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/cron-silent-filter: {}
 
   extensions/deepgram:
     devDependencies:
@@ -689,6 +701,8 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  extensions/file-safety-guard: {}
+
   extensions/file-transfer:
     dependencies:
       minimatch:
@@ -812,6 +826,8 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/insights-tracker: {}
 
   extensions/inworld:
     devDependencies:
@@ -997,6 +1013,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/memory-nudge: {}
+
   extensions/memory-wiki:
     dependencies:
       typebox:
@@ -1065,6 +1083,14 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/mixture-of-agents:
+    dependencies:
+      typebox:
+        specifier: 1.1.38
+        version: 1.1.38
+
+  extensions/model-guidance: {}
 
   extensions/moonshot:
     devDependencies:
@@ -1140,6 +1166,12 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/observability:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/oc-path:
     dependencies:
@@ -1228,6 +1260,14 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/process-monitor:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
+  extensions/prompt-cache-anchor: {}
 
   extensions/qa-channel:
     dependencies:
@@ -1335,6 +1375,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/rate-limit-guard:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/runway:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -1369,6 +1415,16 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/skill-auto-create: {}
+
+  extensions/skill-curator:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
+  extensions/skill-security-scan: {}
+
   extensions/skill-workshop:
     dependencies:
       typebox:
@@ -1378,6 +1434,8 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/skill-yaml-validator: {}
 
   extensions/slack:
     dependencies:
@@ -1404,6 +1462,16 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  extensions/smart-approvals: {}
+
+  extensions/smart-compaction: {}
+
+  extensions/smart-provider-fallback: {}
+
+  extensions/smart-router: {}
+
+  extensions/soul-personality: {}
+
   extensions/speech-core:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -1415,6 +1483,15 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/subdirectory-hints:
+    devDependencies:
+      '@mariozechner/pi-agent-core':
+        specifier: 0.69.0
+        version: 0.69.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(ws@8.20.0)(zod@4.4.3)
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
 
   extensions/synology-chat:
     dependencies:
@@ -1470,6 +1547,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
 
+  extensions/think-block-filter: {}
+
   extensions/tlon:
     dependencies:
       '@aws-sdk/client-s3':
@@ -1495,6 +1574,12 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  extensions/todo-manager:
+    dependencies:
+      typebox:
+        specifier: 1.1.38
+        version: 1.1.38
+
   extensions/together:
     devDependencies:
       '@openclaw/plugin-sdk':
@@ -1510,6 +1595,14 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/tool-loop-guard:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
+  extensions/tool-output-truncation: {}
 
   extensions/tts-local-cli:
     devDependencies:
@@ -1535,6 +1628,8 @@ importers:
       '@openclaw/plugin-sdk':
         specifier: workspace:*
         version: link:../../packages/plugin-sdk
+
+  extensions/usage-tracker: {}
 
   extensions/venice:
     devDependencies:
@@ -3042,6 +3137,17 @@ packages:
   '@mariozechner/clipboard@0.3.5':
     resolution: {integrity: sha512-D3F+UrU9CR7roJt0zDLp6Oc+4/KlLDIrN4frH+6V90SJNW2KKUec1oCQIPaaDjCqeOsQyX9dyqYbImIQIM45PA==}
     engines: {node: '>= 10'}
+
+  '@mariozechner/pi-agent-core@0.69.0':
+    resolution: {integrity: sha512-dYZjee7QEIwVVbDGCGriiLjDT34IdMlXMjMp4drVKcLEuVc+BztyODwu3w4ZORVvwaySGGlF9UALjJKUVoXiug==}
+    engines: {node: '>=20.0.0'}
+    deprecated: please use @earendil-works/pi-agent-core instead going forward
+
+  '@mariozechner/pi-ai@0.69.0':
+    resolution: {integrity: sha512-bl838sr57zx/apkiTeNPFQgbBkGXN4HHhm2oghzSRohJIBrR+H001bTeco7Osuke+EZTxO3V5Aev2qlZdUa2xw==}
+    engines: {node: '>=20.0.0'}
+    deprecated: please use @earendil-works/pi-ai instead going forward
+    hasBin: true
 
   '@matrix-org/matrix-sdk-crypto-nodejs@0.5.1':
     resolution: {integrity: sha512-m1nTFhUJv8AZCvuVmZ0wgYsFaseVNMhl3Jqu18KoHs7TQa+mmAW4q3xY6MuVApd75Zu9E0ooQeA5obUZdQ24OA==}
@@ -9733,6 +9839,41 @@ snapshots:
       '@mariozechner/clipboard-win32-arm64-msvc': 0.3.2
       '@mariozechner/clipboard-win32-x64-msvc': 0.3.2
     optional: true
+
+  '@mariozechner/pi-agent-core@0.69.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(ws@8.20.0)(zod@4.4.3)':
+    dependencies:
+      '@mariozechner/pi-ai': 0.69.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(ws@8.20.0)(zod@4.4.3)
+      typebox: 1.1.38
+    transitivePeerDependencies:
+      - '@modelcontextprotocol/sdk'
+      - aws-crt
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+      - ws
+      - zod
+
+  '@mariozechner/pi-ai@0.69.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(ws@8.20.0)(zod@4.4.3)':
+    dependencies:
+      '@anthropic-ai/sdk': 0.95.1(zod@4.4.3)
+      '@aws-sdk/client-bedrock-runtime': 3.1045.0
+      '@google/genai': 1.52.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))
+      '@mistralai/mistralai': 2.2.1
+      chalk: 5.6.2
+      openai: 6.26.0(ws@8.20.0)(zod@4.4.3)
+      partial-json: 0.1.7
+      proxy-agent: 6.5.0
+      typebox: 1.1.38
+      undici: 7.25.0
+      zod-to-json-schema: 3.25.2(zod@4.4.3)
+    transitivePeerDependencies:
+      - '@modelcontextprotocol/sdk'
+      - aws-crt
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+      - ws
+      - zod
 
   '@matrix-org/matrix-sdk-crypto-nodejs@0.5.1':
     dependencies:

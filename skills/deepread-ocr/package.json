@@ -1,0 +1,28 @@
+{
+  "name": "deepread",
+  "version": "1.0.6",
+  "description": "Production OCR API for AI agents. Process PDFs and extract structured data with confidence scoring.",
+  "keywords": [
+    "ai",
+    "document-processing",
+    "extraction",
+    "ocr",
+    "pdf",
+    "structured-data"
+  ],
+  "homepage": "https://www.deepread.tech",
+  "license": "MIT",
+  "author": "DeepRead <hello@deepread.tech>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deepread-tech/deep-read-service"
+  },
+  "openclaw": {
+    "requires": {
+      "env": [
+        "DEEPREAD_API_KEY"
+      ]
+    },
+    "primaryEnv": "DEEPREAD_API_KEY"
+  }
+}

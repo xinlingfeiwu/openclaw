@@ -1,0 +1,32 @@
+{
+  "name": "webhook-robot",
+  "version": "1.1.0",
+  "description": "A universal skill to send messages to WeCom, DingTalk, and Feishu robots via webhooks.",
+  "keywords": [
+    "bot",
+    "dingtalk",
+    "feishu",
+    "openclaw",
+    "robot",
+    "skill",
+    "webhook",
+    "wecom"
+  ],
+  "homepage": "https://github.com/takedwind/webhook-robot-skill",
+  "license": "MIT",
+  "author": "takedwind",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takedwind/webhook-robot-skill.git"
+  },
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "scripts/"
+  ],
+  "main": "scripts/send_wecom.py",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,30 @@
+{
+  "id": "soul-personality",
+  "name": "SOUL Personality",
+  "description": "Injects a custom SOUL personality file (~/.openclaw/SOUL.md) into the agent system prompt, and scans for prompt injection attacks.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "soulFile": {
+        "type": "string",
+        "description": "Path to the SOUL personality file (default: ~/.openclaw/SOUL.md)"
+      },
+      "enableInjectionScan": {
+        "type": "boolean",
+        "description": "Scan incoming prompts for injection attacks (default: true)"
+      }
+    }
+  },
+  "uiHints": {
+    "soulFile": {
+      "label": "SOUL File Path",
+      "help": "Path to the SOUL personality file (default: ~/.openclaw/SOUL.md)"
+    },
+    "enableInjectionScan": {
+      "label": "Enable Injection Scan",
+      "help": "Warn when prompts contain suspected injection patterns"
+    }
+  }
+}

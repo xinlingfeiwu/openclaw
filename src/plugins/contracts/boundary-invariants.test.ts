@@ -11,20 +11,51 @@ const tsFilesCache = new Map<string, string[]>();
 const BUNDLED_TYPED_HOOK_REGISTRATION_FILES = [
   "extensions/acpx/index.ts",
   "extensions/active-memory/index.ts",
+  "extensions/channel-hints/index.ts",
+  "extensions/checkpoint-rollback/index.ts",
   "extensions/codex/index.ts",
+  "extensions/context-fence/index.ts",
+  "extensions/cron-silent-filter/index.ts",
   "extensions/diffs/src/plugin.ts",
   "extensions/discord/subagent-hooks-api.ts",
   "extensions/feishu/subagent-hooks-api.ts",
+  "extensions/file-safety-guard/index.ts",
+  "extensions/insights-tracker/index.ts",
   "extensions/matrix/subagent-hooks-api.ts",
   "extensions/memory-core/src/dreaming.ts",
   "extensions/memory-lancedb/index.ts",
+  "extensions/memory-nudge/index.ts",
+  "extensions/model-guidance/index.ts",
+  "extensions/observability/index.ts",
+  "extensions/process-monitor/index.ts",
+  "extensions/prompt-cache-anchor/index.ts",
+  "extensions/rate-limit-guard/index.ts",
+  "extensions/skill-auto-create/index.ts",
+  "extensions/skill-curator/index.ts",
+  "extensions/skill-security-scan/index.ts",
   "extensions/skill-workshop/index.ts",
+  "extensions/skill-yaml-validator/index.ts",
+  "extensions/smart-approvals/index.ts",
+  "extensions/smart-compaction/index.ts",
+  "extensions/smart-provider-fallback/index.ts",
+  "extensions/smart-router/index.ts",
+  "extensions/soul-personality/index.ts",
+  "extensions/subdirectory-hints/index.ts",
+  "extensions/think-block-filter/index.ts",
   "extensions/thread-ownership/index.ts",
+  "extensions/todo-manager/index.ts",
+  "extensions/tool-loop-guard/index.ts",
+  "extensions/tool-output-truncation/index.ts",
+  "extensions/usage-tracker/index.ts",
 ] as const;
 const BUNDLED_TYPED_HOOK_REGISTRATION_GUARDS = {
   "extensions/acpx/index.ts": ["reply_dispatch"],
   "extensions/active-memory/index.ts": ["before_prompt_build"],
+  "extensions/channel-hints/index.ts": ["before_prompt_build"],
+  "extensions/checkpoint-rollback/index.ts": ["agent_end", "before_tool_call"],
   "extensions/codex/index.ts": ["inbound_claim"],
+  "extensions/context-fence/index.ts": ["before_prompt_build"],
+  "extensions/cron-silent-filter/index.ts": ["message_sending"],
   "extensions/diffs/src/plugin.ts": ["before_prompt_build"],
   "extensions/discord/subagent-hooks-api.ts": [
     "subagent_delivery_target",
@@ -36,6 +67,8 @@ const BUNDLED_TYPED_HOOK_REGISTRATION_GUARDS = {
     "subagent_ended",
     "subagent_spawning",
   ],
+  "extensions/file-safety-guard/index.ts": ["before_tool_call"],
+  "extensions/insights-tracker/index.ts": ["after_tool_call", "agent_end", "llm_output"],
   "extensions/matrix/subagent-hooks-api.ts": [
     "subagent_delivery_target",
     "subagent_ended",
@@ -43,8 +76,59 @@ const BUNDLED_TYPED_HOOK_REGISTRATION_GUARDS = {
   ],
   "extensions/memory-core/src/dreaming.ts": ["before_agent_reply", "gateway_start", "gateway_stop"],
   "extensions/memory-lancedb/index.ts": ["agent_end", "before_prompt_build", "session_end"],
+  "extensions/memory-nudge/index.ts": ["agent_end", "before_prompt_build"],
+  "extensions/model-guidance/index.ts": ["before_prompt_build"],
+  "extensions/process-monitor/index.ts": [
+    "after_tool_call",
+    "before_prompt_build",
+    "before_tool_call",
+  ],
+  "extensions/prompt-cache-anchor/index.ts": ["before_prompt_build"],
+  "extensions/rate-limit-guard/index.ts": ["after_tool_call", "agent_end", "before_prompt_build"],
+  "extensions/skill-auto-create/index.ts": ["after_tool_call", "agent_end", "before_prompt_build"],
+  "extensions/skill-security-scan/index.ts": ["before_tool_call"],
   "extensions/skill-workshop/index.ts": ["agent_end", "before_prompt_build"],
+  "extensions/skill-yaml-validator/index.ts": ["before_tool_call"],
+  "extensions/smart-approvals/index.ts": [
+    "agent_end",
+    "before_tool_call",
+    "llm_output",
+    "subagent_ended",
+    "subagent_spawned",
+  ],
+  "extensions/smart-compaction/index.ts": [
+    "after_compaction",
+    "agent_end",
+    "before_compaction",
+    "before_prompt_build",
+  ],
+  "extensions/smart-provider-fallback/index.ts": ["before_model_resolve", "llm_output"],
+  "extensions/smart-router/index.ts": ["before_model_resolve"],
+  "extensions/soul-personality/index.ts": ["before_prompt_build"],
+  "extensions/subdirectory-hints/index.ts": ["before_tool_call", "tool_result_persist"],
+  "extensions/think-block-filter/index.ts": ["message_sending"],
   "extensions/thread-ownership/index.ts": ["message_received", "message_sending"],
+  "extensions/todo-manager/index.ts": ["before_prompt_build"],
+  "extensions/tool-output-truncation/index.ts": [
+    "agent_end",
+    "before_model_resolve",
+    "tool_result_persist",
+  ],
+  "extensions/tool-loop-guard/index.ts": [
+    "after_tool_call",
+    "agent_end",
+    "before_prompt_build",
+    "before_tool_call",
+  ],
+  "extensions/skill-curator/index.ts": ["agent_end", "before_prompt_build", "gateway_start"],
+  "extensions/observability/index.ts": [
+    "after_tool_call",
+    "agent_end",
+    "before_tool_call",
+    "model_call_ended",
+    "model_call_started",
+  ],
+  "extensions/usage-tracker/index.ts": ["before_model_resolve", "llm_output"],
 } as const satisfies Record<
   (typeof BUNDLED_TYPED_HOOK_REGISTRATION_FILES)[number],
   readonly string[]
@@ -76,11 +160,6 @@ const BUNDLED_LIVE_CONFIG_PROVIDER_GUARDS = {
     "const startupPluginConfig = (api.pluginConfig ?? {})",
     "const currentPluginConfig = resolveCurrentPluginConfig(ctx.config);",
     "const currentGuardrail = resolveCurrentPluginConfig(config)?.guardrail;",
-  ],
-  "extensions/amazon-bedrock-mantle/register.sync.runtime.ts": [
-    "resolvePluginConfigObject(",
-    "const startupPluginConfig = (api.pluginConfig ?? {})",
-    "const currentPluginConfig = resolveCurrentPluginConfig(ctx.config);",
   ],
   "extensions/codex/provider.ts": [
     "resolvePluginConfigObject(",
@@ -233,7 +312,7 @@ describe("plugin contract boundary invariants", () => {
       }
       return readRepoSource(file).includes("contracts/inventory/bundled-capability-metadata");
     });
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it("keeps the bundled contract inventory out of non-test runtime code", () => {
@@ -241,7 +320,7 @@ describe("plugin contract boundary invariants", () => {
     const offenders = files.filter((file) => {
       return readRepoSource(file).includes("contracts/inventory/bundled-capability-metadata");
     });
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it("keeps core tests off bundled extension deep imports", () => {
@@ -251,7 +330,7 @@ describe("plugin contract boundary invariants", () => {
         (specifier) => !isAllowedBundledExtensionImport(specifier),
       );
     });
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it("keeps plugin contract tests off bundled path helpers unless the test is explicitly about paths", () => {
@@ -268,7 +347,7 @@ describe("plugin contract boundary invariants", () => {
         )
       );
     });
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it("keeps channel production code off bundled-plugin-metadata helpers", () => {
@@ -276,7 +355,7 @@ describe("plugin contract boundary invariants", () => {
     const offenders = files.filter((file) => {
       return readRepoSource(file).includes("plugins/bundled-plugin-metadata");
     });
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it("keeps contract loaders off hand-built bundled extension paths", () => {
@@ -288,13 +367,13 @@ describe("plugin contract boundary invariants", () => {
       const source = readRepoSource(file);
       return /extensions\/\$\{|\.\.\/\.\.\/\.\.\/\.\.\/extensions\//u.test(source);
     });
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it("keeps bundled plugin production code off legacy before_agent_start hooks", () => {
     const files = listTsFiles("extensions", { excludeTests: true });
     const offenders = files.filter((file) => readRepoSource(file).includes("before_agent_start"));
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it("keeps bundled plugin typed hook registrations on an explicit allowlist", () => {
@@ -317,7 +396,7 @@ describe("plugin contract boundary invariants", () => {
   it("keeps bundled plugin production code off raw registerHook calls", () => {
     const files = listTsFiles("extensions", { excludeTests: true });
     const offenders = files.filter((file) => /\bregisterHook\(/u.test(readRepoSource(file)));
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it("keeps long-lived bundled hook handlers on live runtime config lookups", () => {
@@ -329,7 +408,7 @@ describe("plugin contract boundary invariants", () => {
           .map((snippet) => `${file}: ${snippet}`);
       },
     );
-    expect(missingGuards).toStrictEqual([]);
+    expect(missingGuards).toEqual([]);
   });
 
   it("keeps live provider config surfaces on runtime config lookups", () => {
@@ -341,7 +420,7 @@ describe("plugin contract boundary invariants", () => {
           .map((snippet) => `${file}: ${snippet}`);
       },
     );
-    expect(missingGuards).toStrictEqual([]);
+    expect(missingGuards).toEqual([]);
   });
 
   it("keeps long-lived bundled hook handlers off startup-only registration gates", () => {
@@ -353,6 +432,6 @@ describe("plugin contract boundary invariants", () => {
           .map((snippet) => `${file}: ${snippet}`);
       },
     );
-    expect(offenders).toStrictEqual([]);
+    expect(offenders).toEqual([]);
   });
 });

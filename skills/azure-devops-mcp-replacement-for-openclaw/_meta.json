@@ -1,0 +1,17 @@
+{
+  "owner": "ahmedyehya92",
+  "slug": "azure-devops-mcp-replacement-for-openclaw",
+  "displayName": "Azure Devops MCP Replacement For OpenClaw",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773077453718,
+    "commit": "https://github.com/openclaw/skills/commit/0a7a116d4b3471879cd2bedb49679ce3e2cb822d"
+  },
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773005611356,
+      "commit": "https://github.com/openclaw/skills/commit/42bc3898c26bfb1209f280ee8ddbda922391aa4b"
+    }
+  ]
+}

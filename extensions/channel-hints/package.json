@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/channel-hints",
+  "version": "2026.4.17",
+  "private": true,
+  "description": "Injects channel-specific format and capability hints into the system prompt, ported from hermes-agent PLATFORM_HINTS",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

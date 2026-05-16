@@ -1,0 +1,25 @@
+{
+  "id": "tool-output-truncation",
+  "name": "Tool Output Truncation",
+  "description": "Automatically truncates oversized tool outputs using a smart 40/60 head/tail split (ported from hermes terminal_tool.py). Preserves early error messages (head) and most recent output (tail), preventing context window overflow from verbose terminal or file output.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "maxChars": {
+        "type": "number",
+        "description": "Max characters before truncation kicks in (default: 50000 ≈ 12K tokens)"
+      },
+      "headRatio": {
+        "type": "number",
+        "description": "Fraction of budget allocated to the beginning of output (default: 0.4 = 40%)"
+      },
+      "skipTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Tool names to skip truncation for (e.g. [\"read_file\"] if you prefer full file reads)"
+      }
+    }
+  }
+}

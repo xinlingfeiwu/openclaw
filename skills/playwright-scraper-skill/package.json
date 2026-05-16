@@ -1,0 +1,23 @@
+{
+  "name": "playwright-scraper-skill",
+  "version": "1.2.0",
+  "description": "基於 Playwright 的網頁爬蟲 OpenClaw Skill",
+  "keywords": [
+    "anti-detection",
+    "cloudflare",
+    "playwright",
+    "puppeteer",
+    "scraper"
+  ],
+  "license": "MIT",
+  "author": "多米",
+  "main": "scripts/playwright-stealth.js",
+  "scripts": {
+    "simple": "node scripts/playwright-simple.js",
+    "stealth": "node scripts/playwright-stealth.js",
+    "test": "bash test.sh"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

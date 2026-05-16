@@ -1,0 +1,44 @@
+{
+  "id": "memory-nudge",
+  "name": "Memory Nudge",
+  "description": "Periodically reminds the agent to save useful information (preferences, technical details, environment facts) to memory every N conversation turns.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "interval": {
+        "type": "number",
+        "description": "Number of user turns between nudges (default: 5)"
+      },
+      "maxPerSession": {
+        "type": "number",
+        "description": "Maximum nudges per session (default: 10, 0 = unlimited)"
+      },
+      "nudgeText": {
+        "type": "string",
+        "description": "Custom nudge prompt to inject (optional)"
+      }
+    }
+  },
+  "uiHints": {
+    "enabled": {
+      "label": "Enabled",
+      "help": "Enable periodic memory nudge prompts"
+    },
+    "interval": {
+      "label": "Nudge Interval",
+      "help": "Number of user turns between nudge reminders (default: 5)"
+    },
+    "maxPerSession": {
+      "label": "Max Per Session",
+      "help": "Maximum nudge injections per session (0 = unlimited, default: 10)"
+    },
+    "nudgeText": {
+      "label": "Custom Nudge Text",
+      "help": "Override the default memory nudge prompt text"
+    }
+  }
+}

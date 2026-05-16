@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "skills": {
+    "codebase-documenter": {
+      "version": "0.1.0",
+      "installedAt": 1770182934353
+    },
+    "quality-documentation-manager": {
+      "version": "0.1.0",
+      "installedAt": 1770182936881
+    },
+    "adr-writer": {
+      "version": "1.0.0",
+      "installedAt": 1770182939030
+    },
+    "research-paper-writer": {
+      "version": "0.1.0",
+      "installedAt": 1770182941553
+    },
+    "blog-writer": {
+      "version": "0.1.0",
+      "installedAt": 1770182944344
+    },
+    "tax-professional": {
+      "version": "1.0.1",
+      "installedAt": 1770182946741
+    },
+    "finance": {
+      "version": "1.1.2",
+      "installedAt": 1770182948940
+    },
+    "tavily-search": {
+      "version": "1.0.0",
+      "installedAt": 1770655643179
+    },
+    "exa-web-search-free": {
+      "version": "1.0.1",
+      "installedAt": 1770688676809
+    },
+    "gemini-image-simple": {
+      "version": "1.1.0",
+      "installedAt": 1771343887560
+    },
+    "akshare-cn-market": {
+      "version": "1.1.0",
+      "installedAt": 1772466073918
+    }
+  }
+}

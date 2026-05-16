@@ -1,0 +1,20 @@
+{
+  "id": "skill-yaml-validator",
+  "name": "Skill YAML Validator",
+  "version": "0.1.0",
+  "description": "Validates skill file YAML frontmatter before writes. Enforces hermes skill_manager_tool.py constraints: name pattern, length limits, required fields, content size cap, and path traversal guard.",
+  "openclaw.install.npmSpec": "skill-yaml-validator",
+  "configSchema": {
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable or disable skill YAML validation."
+    },
+    "skillPaths": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["~/.openclaw/skills"],
+      "description": "Directories considered as skill paths. Files outside these paths are not validated."
+    }
+  }
+}

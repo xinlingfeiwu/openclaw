@@ -1,0 +1,35 @@
+{
+  "name": "marketing-drafter",
+  "version": "1.0.0",
+  "description": "AI content generation for emails, social posts, ads, landing pages. Brand voice consistency, A/B testing, batch generation.",
+  "keywords": [
+    "ads",
+    "ai",
+    "automation",
+    "content-generation",
+    "copywriting",
+    "email",
+    "marketing",
+    "social-media"
+  ],
+  "license": "MIT",
+  "author": "Midas Skills",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/midas-skills/marketing-drafter"
+  },
+  "main": "index.js",
+  "clawhub": {
+    "category": "marketing-automation",
+    "tags": [
+      "content-generation",
+      "ai-copy",
+      "email",
+      "social-media",
+      "ads"
+    ],
+    "skillType": "marketing",
+    "price": "0",
+    "proPrice": "39.99"
+  }
+}

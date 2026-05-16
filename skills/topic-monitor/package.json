@@ -1,0 +1,64 @@
+{
+  "name": "@openclaw/topic-monitor",
+  "version": "1.3.4",
+  "description": "Monitor topics of interest and get proactive alerts when important developments occur",
+  "keywords": [
+    "alerts",
+    "monitoring",
+    "news",
+    "openclaw",
+    "proactive",
+    "research",
+    "skill",
+    "tracking"
+  ],
+  "homepage": "https://clawhub.ai/robbyczgw-cla/topic-monitor",
+  "bugs": {
+    "url": "https://github.com/robbyczgw-cla/topic-monitor/issues"
+  },
+  "license": "MIT",
+  "author": "robbyczgw-cla",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robbyczgw-cla/topic-monitor.git"
+  },
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "config.example.json",
+    "scripts/"
+  ],
+  "scripts": {
+    "digest": "python3 scripts/digest.py",
+    "monitor": "python3 scripts/monitor.py",
+    "setup": "python3 scripts/setup.py",
+    "topics": "python3 scripts/manage_topics.py"
+  },
+  "dependencies": {
+    "python": ">=3.8"
+  },
+  "optionalDependencies": {
+    "skills": [
+      "web-search-plus"
+    ]
+  },
+  "openclaw": {
+    "skill": true,
+    "triggers": [
+      "monitor topic",
+      "track topic",
+      "topic alerts"
+    ],
+    "capabilities": [
+      "proactive-alerts",
+      "topic-tracking",
+      "digest-reports"
+    ],
+    "requirements": {
+      "bins": [
+        "python3"
+      ],
+      "env": {}
+    }
+  }
+}

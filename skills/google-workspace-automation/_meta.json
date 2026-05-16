@@ -1,0 +1,11 @@
+{
+  "owner": "0x-professor",
+  "slug": "google-workspace-automation",
+  "displayName": "Google Workspace Automation",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1772136198403,
+    "commit": "https://github.com/openclaw/skills/commit/e2da41be12fa5797f30ce638292f7e67221ddf91"
+  },
+  "history": []
+}

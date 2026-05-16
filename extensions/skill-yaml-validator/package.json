@@ -1,0 +1,11 @@
+{
+  "name": "skill-yaml-validator",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.ts",
+  "openclaw": {
+    "install": {
+      "npmSpec": "skill-yaml-validator"
+    }
+  }
+}

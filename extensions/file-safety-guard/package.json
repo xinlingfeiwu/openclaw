@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/file-safety-guard",
+  "version": "2026.4.14",
+  "private": true,
+  "description": "Blocks AI agent writes to sensitive credential and system configuration files",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

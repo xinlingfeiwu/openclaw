@@ -1,0 +1,20 @@
+{
+  "id": "smart-compaction",
+  "name": "Smart Compaction",
+  "description": "Anti-thrash compaction guard: skips compaction if one already ran recently (within cooldown window), preventing back-to-back redundant compressions.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "cooldownMs": {
+        "type": "number",
+        "description": "Min milliseconds between compactions per session (default: 120000 = 2 min)"
+      },
+      "minMessagesSinceLastCompaction": {
+        "type": "number",
+        "description": "Skip if fewer than N new messages since last compaction (default: 10)"
+      }
+    }
+  }
+}

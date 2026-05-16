@@ -31,6 +31,19 @@ const DIR_ID_EXCEPTIONS = new Map<string, string>([
   // Historical directory name kept until a wider repo cleanup is worth the churn.
   ["kimi-coding", "kimi"],
 ]);
+// Fork-specific extensions that use @openclaw-ext/ namespace or no scope.
+// These are local-only plugins not published under the @openclaw/ namespace.
+const FORK_PACKAGE_EXCEPTIONS = new Set<string>([
+  "checkpoint-rollback",
+  "cron-silent-filter",
+  "observability",
+  "process-monitor",
+  "rate-limit-guard",
+  "skill-curator",
+  "skill-yaml-validator",
+  "subdirectory-hints",
+  "tool-loop-guard",
+]);
 const NON_PACKAGED_BUNDLED_PLUGIN_DIRS = new Set(["qa-channel", "qa-lab", "qa-matrix"]);
 const ALLOWED_PACKAGE_SUFFIXES = [
   "",
@@ -101,10 +114,7 @@ function expectNoBundledPluginNamingMismatches(params: {
   collectMismatches: (records: BundledPluginRecord[]) => string[];
 }) {
   const mismatches = resolveBundledPluginMismatches(params.collectMismatches);
-  expect(
-    mismatches,
-    `${params.message}\nFound: ${mismatches.join(", ") || "<none>"}`,
-  ).toStrictEqual([]);
+  expect(mismatches, `${params.message}\nFound: ${mismatches.join(", ") || "<none>"}`).toEqual([]);
 }
 
 describe("bundled plugin naming guardrails", () => {
@@ -116,6 +126,7 @@ describe("bundled plugin naming guardrails", () => {
         records
           .filter(
             ({ packageName, manifestId }) =>
+              !FORK_PACKAGE_EXCEPTIONS.has(manifestId) &&
               !resolveAllowedPackageNamesForId(manifestId).includes(packageName),
           )
           .map(

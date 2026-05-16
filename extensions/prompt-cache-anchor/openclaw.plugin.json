@@ -1,0 +1,21 @@
+{
+  "id": "prompt-cache-anchor",
+  "name": "Prompt Cache Anchor",
+  "description": "Appends a stable, byte-identical anchor comment to the system prompt to maximize Anthropic automatic prefix-cache hits.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "anchor": {
+        "type": "string",
+        "description": "The anchor string to append (must be stable across turns)"
+      },
+      "cacheHint": {
+        "type": "string",
+        "enum": ["5m", "1h"],
+        "description": "Desired cache TTL hint appended as a comment. '5m' = default Anthropic prefix-cache; '1h' = 1-hour TTL (requires provider support). Changing this value will invalidate existing cache hits (default: '5m')"
+      }
+    }
+  }
+}

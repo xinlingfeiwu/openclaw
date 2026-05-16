@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/think-block-filter",
+  "version": "2026.4.14",
+  "private": true,
+  "description": "Strips model reasoning scratchpad blocks from agent replies",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

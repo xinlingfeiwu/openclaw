@@ -1,0 +1,11 @@
+{
+  "name": "@ai-labs-claude-skills/seo-optimizer",
+  "version": "1.0.0",
+  "description": "Claude AI skill: seo-optimizer",
+  "license": "MIT",
+  "author": "AI Labs",
+  "files": [
+    "."
+  ],
+  "main": "index.js"
+}

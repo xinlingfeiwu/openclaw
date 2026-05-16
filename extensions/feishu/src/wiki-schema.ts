@@ -25,7 +25,9 @@ export const FeishuWikiSchema = Type.Union([
     space_id: Type.String({ description: "Knowledge space ID" }),
     title: Type.String({ description: "Node title" }),
     obj_type: Type.Optional(
-      Type.Union([Type.Literal("docx"), Type.Literal("sheet"), Type.Literal("bitable")], {
+      Type.Unsafe<"docx" | "sheet" | "bitable">({
+        type: "string",
+        enum: ["docx", "sheet", "bitable"],
         description: "Object type (default: docx)",
       }),
     ),

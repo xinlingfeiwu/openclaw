@@ -619,7 +619,9 @@ function buildPollSchema() {
         props[name] = Type.Optional(Type.Array(Type.String()));
         break;
       case "positiveInteger":
-        props[name] = optionalPositiveIntegerSchema();
+        // Use minimum:0 so the model defaults to 0 (treated as "unset") rather than 1,
+        // preventing false-positive hasPollCreationParams detection on non-poll send calls.
+        props[name] = optionalNonNegativeIntegerSchema();
         break;
       case "boolean":
         props[name] = Type.Optional(Type.Boolean());

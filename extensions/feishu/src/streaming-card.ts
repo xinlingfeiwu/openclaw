@@ -378,9 +378,22 @@ export class FeishuStreamingSession {
         policy: { allowedHostnames: resolveAllowedHostnames(this.creds.domain) },
         auditContext: "feishu.streaming-card.update",
       });
-      await release();
       if (!response.ok) {
+        await release();
         onError?.(new Error(`Update card content failed with HTTP ${response.status}`));
+        return false;
+      }
+      const data = (await response.json()) as { code: number; msg?: string };
+      await release();
+      if (data.code !== 0) {
+        // 300309 = streaming mode is closed on Feishu's server (e.g. feature not enabled
+        // in the app's developer console, or the session expired). Self-close so the
+        // dispatcher stops retrying and falls back to a non-streaming final card instead
+        // of spamming logs on every subsequent text chunk.
+        if (data.code === 300309) {
+          this.closed = true;
+        }
+        onError?.(new Error(`Update card content failed: code=${data.code} msg=${data.msg ?? ""}`));
         return false;
       }
       return true;
@@ -418,9 +431,20 @@ export class FeishuStreamingSession {
         policy: { allowedHostnames: resolveAllowedHostnames(this.creds.domain) },
         auditContext: "feishu.streaming-card.replace",
       });
-      await release();
       if (!response.ok) {
+        await release();
         onError?.(new Error(`Replace card content failed with HTTP ${response.status}`));
+        return false;
+      }
+      const data = (await response.json()) as { code: number; msg?: string };
+      await release();
+      if (data.code !== 0) {
+        if (data.code === 300309) {
+          this.closed = true;
+        }
+        onError?.(
+          new Error(`Replace card content failed: code=${data.code} msg=${data.msg ?? ""}`),
+        );
         return false;
       }
       return true;

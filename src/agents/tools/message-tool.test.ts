@@ -407,11 +407,11 @@ describe("message tool gateway timeout", () => {
     expect(getToolProperties(tool).timeoutMs).toMatchObject({ type: "integer", minimum: 1 });
   });
 
-  it("advertises shared poll duration as a positive integer", () => {
+  it("advertises shared poll duration as a non-negative integer", () => {
     const tool = createMessageTool();
     expect(getToolProperties(tool).pollDurationHours).toMatchObject({
       type: "integer",
-      minimum: 1,
+      minimum: 0,
     });
   });
 

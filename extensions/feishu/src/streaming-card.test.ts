@@ -494,6 +494,77 @@ describe("FeishuStreamingSession", () => {
     expect(authTokens).toEqual(["token-1", "token-2"]);
     dateNow.mockRestore();
   });
+
+  it("self-closes on 300309 and stops retrying", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(5_000);
+    const updateBodies: string[] = [];
+    const log = vi.fn();
+    // All content updates return 300309 (streaming mode closed on server)
+    const release = vi.fn(async () => {});
+    fetchWithSsrFGuardMock.mockImplementation(
+      async ({ url, init }: { url: string; init?: { body?: string } }) => {
+        if (url.includes("/auth/")) {
+          return {
+            response: {
+              ok: true,
+              json: async () => ({
+                code: 0,
+                msg: "ok",
+                tenant_access_token: "token",
+                expire: 7200,
+              }),
+            },
+            release,
+          };
+        }
+        if (url.includes("/elements/content/content")) {
+          updateBodies.push(init?.body ?? "");
+          return {
+            response: {
+              ok: true,
+              status: 200,
+              json: async () => ({ code: 300309, msg: "ErrMsg: streaming mode is closed;" }),
+            },
+            release,
+          };
+        }
+        return {
+          response: { ok: true, status: 200, json: async () => ({ code: 0, msg: "ok" }) },
+          release,
+        };
+      },
+    );
+
+    const session = new FeishuStreamingSession(
+      {} as never,
+      { appId: "app_300309_self_close", appSecret: "secret" },
+      log,
+    );
+    setStreamingSessionInternals(session, {
+      state: {
+        cardId: "card_300309",
+        messageId: "om_300309",
+        sequence: 1,
+        currentText: "hello",
+        sentText: "hello",
+        hasNote: false,
+      },
+      lastUpdateTime: 2_000,
+    });
+
+    await session.update("hello world");
+    // Session must be inactive after 300309 — no further updates should be attempted
+    expect(session.isActive()).toBe(false);
+    await session.update("hello world continued");
+
+    // Only one update attempt: the 300309 one. The second update is dropped because
+    // isActive() is false after self-close.
+    expect(updateBodies).toHaveLength(1);
+    expect(log).toHaveBeenCalledWith(
+      expect.stringContaining("Update card content failed: code=300309"),
+    );
+  });
 });
 
 describe("mergeStreamingText", () => {
